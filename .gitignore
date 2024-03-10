@@ -1,9 +1,2 @@
-**/certificate-refresh_FORCE_LIST.txt
-**/certificate-refresh_FORCE_renameMe-ON.txt
-**/certificate-refresh_renameMe-ON.txt
-**/github-raw-installs.txt
-**/github-release-install.txt
-**/winget-installs.txt
-**/enforce-issues.txt
 **/test.bat
 *.crt

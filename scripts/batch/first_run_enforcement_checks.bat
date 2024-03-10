@@ -6,6 +6,10 @@ set TIMESTAMP=%TIMESTAMP: =%
 set LOGFILE=%temp%\damo_net\logs\first-run-enforcement-%TIMESTAMP%.log
 
 if not exist %temp%\damo_net\logs\ (mkdir %temp%\damo_net\logs\)
+if not exist C:\scripts\batch\install_removal (mkdir C:\scripts\batch\install_removal)
+if not exist C:\scripts\batch\github-raw-installs.txt (break>"C:\scripts\batch\github-raw-installs.txt")
+if not exist C:\scripts\batch\github-release-installs.txt (break>"C:\scripts\batch\github-release-installs.txt")
+if not exist C:\scripts\batch\winget-installs.txt (break>"C:\scripts\batch\winget-installs.txt")
 
 
 :: Main entry point for running enforcement and syncing data for Damo.net admin settings. Never rename or delete this file.

@@ -17,9 +17,16 @@ This is where automation and enforcement scripts are synchronized to Windows cli
 6. Delete the manually executed `first_run_enforcement_checks.bat` file (which should *not* be the `C:\script\batch\first_run_enforcement_checks.bat` copy).
 
 ### NAS Installation
-1. Place a copy of the entire enforcement-script-windows folder someewhere within the directory structure of the NAS
+1. Place a copy of the entire enforcement-script-windows folder somewhere within the directory structure of the NAS
 2. Update the `first_run_enforcement_checks.bat` script to rsync from this NAS location via the full path from the client's 'Z' drive mapping.
 3. Create a cronjob that runs once per day and executes the `enforce-checker.sh` script from the NAS device.
+4. The NAS' IP must be `10.10.0.10`
+5. Additional home networks may be added by following instructions within the `first_run_enforcement_checks.bat` per the snippet:
+  6. ```batch
+     :: copy and paste the below 2 lines for each network, updating the FQDN of the router hostname and IP and updating the integer value for neterror array
+     ping -n 1 10.10.0.1 | find "TTL" && ping -n 1 -a 10.10.0.1 | find "RT-AC5300-C300" && ipconfig | find "DAMO.NET"
+     set neterror[0]=%errorlevel%
+     ```  
 
 ### Updating files
 From the NAS drive's enforcement folder, make changes to any file and it will sync and either execute or install.

@@ -16,6 +16,11 @@ This is where automation and enforcement scripts are synchronized to Windows cli
 5. Check the `C:\scripts` folder, ensuring the files `C:\scripts\batch\first_run_enforcement_checks.bat` and `First Run Enforcement Checks.xml` exist.
 6. Delete the manually executed `first_run_enforcement_checks.bat` file (which should *not* be the `C:\script\batch\first_run_enforcement_checks.bat` copy).
 
+### NAS Installation
+1. Place a copy of the entire enforcement-script-windows folder someewhere within the directory structure of the NAS
+2. Update the `first_run_enforcement_checks.bat` script to rsync from this NAS location via the full path from the client's 'Z' drive mapping.
+3. Create a cronjob that runs once per day and executes the `enforce-checker.sh` script from the NAS device.
+
 ### Updating files
 From the NAS drive's enforcement folder, make changes to any file and it will sync and either execute or install.
 

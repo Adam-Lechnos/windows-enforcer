@@ -84,7 +84,7 @@ if exist C:\scripts\batch\featureFlags-first-run_enforcement_checks\certificate-
 
 :: remove before installing certs if feature flag active - via present file name and its list of 'Issued To' cert names (usefull for replacing expired certs)
 if exist C:\scripts\batch\featureFlags-first-run_enforcement_checks\certificate-refresh_renameMe-ON.txt (
-	echo "feature flag active - removing trusted root certificates listed in file before installing (this featuer flas is always active)"  >> %LOGFILE%
+	echo "always active feature flag - removing trusted root certificates listed in file before installing"  >> %LOGFILE%
 	for /F "tokens=*" %%A in (C:\scripts\batch\featureFlags-first-run_enforcement_checks\certificate-refresh_renameMe-ON.txt) do certutil.exe -delstore root %%A && echo ** Cert Name: %%A **  >> %LOGFILE%
 )
 

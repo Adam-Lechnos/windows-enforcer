@@ -6,7 +6,7 @@ This is where automation and enforcement scripts are synchronized to Windows cli
 ### Pre-reqs
 1. [Winget](https://learn.microsoft.com/en-us/windows/package-manager/winget/) installed on each target host
 
-**Installation steps for all new clients**
+### Installation steps for all new clients
 1. Ensure the client is connected to the workgroup, DAMO.NET
 2. Copy the file script\batch\first_run_enforcement_checks.bat, locally to the the C drive from the NAS server, ensuring the client is on an DAMO.NET network.
 3. Ensure the NAS is mapped as drive Z, if not, ensure you can ping 10.10.0.10, the NAS server. (Note: If any other drive is mapped to Z, the script will fail)

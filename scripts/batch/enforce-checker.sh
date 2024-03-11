@@ -1,4 +1,5 @@
 #!/bin/bash
+
 cd "$(dirname "$0")"
 outputlist="./enforce-issues.txt"
 
@@ -12,28 +13,39 @@ fi
 ## check for install management input files and directories and create if missing
 if ! [ -f ./winget-installs.txt ]
 then
-  touch ./winget-install.txt
+  touch ./winget-installs.txt
+  echo "install management file missing and re-created - winget-installs.txt" >> $outputlist
 fi
 
 if ! [ -f ./winget-uninstalls.txt ]
 then
-  touch ./winget-install.txt
+  touch ./winget-uninstalls.txt
+  echo "install management file missing and re-created - winget-uninstalls.txt" >> $outputlist
 fi
 
 if ! [ -f ./github-release-install.txt ]
 then
-  touch ./winget-install.txt
+  touch ./github-release-install.txt
+  echo "install management file missing and re-created - github-release-install.txt" >> $outputlist
 fi
 
 if ! [ -f ./github-raw-installs.txt ]
 then
-  touch ./winget-install.txt
+  touch ./github-raw-installs.txt
+  echo "install management file missing and re-created - github-raw-installs.txt" >> $outputlist
 fi
 
 if ! [ -d ./install-removal ]
 then
-  mkdir install-removal
+  mkdir ./install-removal
+  echo "install management directory missing and re-created - install-removal" >> $outputlist
 fi
+
+## ensure proper carriage returns in input files
+sed -i -e 's/\r$//' ./winget-installs.txt
+sed -i -e 's/\r$//' ./winget-uninstalls.txt
+sed -i -e 's/\r$//' ./github-release-install.txt
+sed -i -e 's/\r$//' ./github-raw-installs.txt
 
 ## check winget list
 listwinget="./winget-installs.txt"
@@ -56,6 +68,13 @@ do
   if (($rc == 1))
   then
     echo winget uninstall issue = $line >> $outputlist
+  fi
+
+  cat ./winget-installs.txt | grep -w "$line" >/dev/null
+  rc2=$?
+  if (($rc2 == 0))
+  then
+    echo winget uninstall conflict with install input = $line >> $outputlist
   fi
 done < "$listwingetrm"
 
@@ -98,6 +117,9 @@ then
   touch $fffolder/certificate-refresh_FORCE_renameMe-OFF.txt
   echo "feature flag = [certificate-refresh_FORCE_renameMe-OFF.txt] file missing and was re-created" >> $outputlist
 fi
+
+## ensure proper carriage returns
+sed -i -e 's/\r$//' $fffolder/certificate-refresh_FORCE_renameMe-*.txt
 
 ## trusted root certificate checks
 rootcertdir="../../trusted-root-certificates"

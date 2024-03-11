@@ -1,3 +1,4 @@
+jqlang.jq
 Git.Git
 GitHub.cli
 ShiningLight.OpenSSL

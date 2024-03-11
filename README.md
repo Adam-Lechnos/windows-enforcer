@@ -59,10 +59,21 @@ If the client is off the network, the script will attempt to execute enforcement
 ### Managing Installs
 Downloads packages to the `C:\Tools` folder, except for those that are obtained via the Winget package manager, in which case are installed according to the Winget process. Note, that only the data is downloaded to the `C:\Tools` folder. Subsequent installs must occur manually post the data retrieval if required. Use this feature for pulling down simple packages. Subsequent download attempts are ignored for each install in which its corresponding directory gets created. For Winget, the script first checks the Winget list command for existing installs. Upgrades are not attempted once the installation is completed. Use `Winget update --all` instead.
 
-There are three files within the scripts\batch folder which reference the following install methods:
+There are four files within the scripts\batch folder which reference the following install methods:
 * `winget-install.txt` - Specify the official widget package names you would like installed. (Recommended). Values are case-sensitive. Use `https://winstall.app` to check the package name spelling.
+* `winget-uninstall.txt` - Specify the official widget package names you would like uninstalled. (Recommended). Values are case-sensitive. Use `https://winstall.app` to check the package name spelling. If the same value exists in `winget-install.txt`, the package will be skipped. 
 * `github-release-installs.txt` - specify a list of downloadable repo packages against repos that utilize the GitHub package release feature. Use OWNER/REPO format.
 * `github-raw-installs.txt` - specify the full URLs against a raw GitHub downloadable, pointing to the `raw.githubusercontent.com` domain.
   * i.e., `https://raw.githubusercontent.com/AndyFul/ConfigureDefender/master/ConfigureDefender.exe` 
 
 Except for 'widget-install.txt', items removed from the text files will result in their respective directory removal from `C:\Tools` only. You must still uninstall packages installed via an installer, hence, these methods, except for Winget, should only be used for simple executables.
+
+### Email Alerting
+Email alerts will be generated with an attached log file if any of the following issues are detected by the `enforce-checker.sh` cron job:
+* Installer management files are missing such as 'winget-install.txt' or the 'install-removal' directory is missing
+  * Files and directories will be re-created without input or data
+* Check installer management files for non-existent packages are executables
+* Check if the Winget installer and uninstaller input files contain the same package
+* Certificate management files are missing such as 'certificate-refresh-FORCE_renameMe-OFF.txt' or the 'trusted-root-certificates' directory is missing.
+  * Files and directories will be re-created with default settings
+*  Ensure input files are properly formatted by replacing correct Posix carriage carriage returns and removing empty lines

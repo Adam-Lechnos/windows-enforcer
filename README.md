@@ -14,8 +14,10 @@ All scheduled tasks are located within the newly created `Damo.net` folder. (wit
 ### Target Host Pre-reqs
 1. [Winget](https://learn.microsoft.com/en-us/windows/package-manager/winget/) and [OpenSSL](https://winstall.app/apps/ShiningLight.OpenSSL) are installed
    1. [robocopy](https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/robocopy) is also required but should be already included in Windows 10 or higher by default
-3. Ensure the drive letter `Z` is unused
-4. Ensure the folder `C:\Tools` is unused
+1. Ensure the following *does not exist* for each new target host being bootstrapped:
+   1. Drive mapping letter `Z`
+   1. Directory path `C:\Tools`
+   1. Directory path `C:\Scripts` 
 
 ### Installation steps for all new clients
 1. Ensure the client is connected to the workgroup, DAMO.NET

@@ -1,4 +1,4 @@
-# enforcement-script-windows
+# Windows Enforcement Script
 Enforce a suite of Installs, OS Settings, and Trusted Root Certificates with an output file sent to email when any issues or warnings are detected.
 
 This is where automation and enforcement scripts are synchronized to Windows client hosts within Damo.net.
@@ -102,3 +102,6 @@ Email alerts will be generated with an attached log file if any of the following
 * Certificate management files are missing such as 'certificate-refresh-FORCE_renameMe-OFF.txt' or the 'trusted-root-certificates' directory is missing.
   * Files and directories will be re-created with default settings
 *  Ensure input files are properly formatted by replacing correct Posix carriage carriage returns and removing empty lines
+*  Any certs expiring within 45 days or less
+  * Will continue to alert until replaced with a non-expiring cert. All cert options should be identical, such as Subject, CN, and SAN.
+  * Once the expiry is 14 days or less automatic replacements will occur. These expiring certs will be removed and then added during the 14-day window.

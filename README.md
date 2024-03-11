@@ -91,7 +91,12 @@ There are four files within the scripts\batch folder which reference the followi
 * `github-raw-installs.txt` - specify the full URLs against a raw GitHub downloadable, pointing to the `raw.githubusercontent.com` domain.
   * i.e., `https://raw.githubusercontent.com/AndyFul/ConfigureDefender/master/ConfigureDefender.exe` 
 
-Except for 'widget-install.txt', items removed from the text files will result in their respective directory removal from `C:\Tools` only. You must still uninstall packages installed via an installer, hence, these methods, except for Winget, should only be used for simple executables.
+Except for 'widget-install.txt', items removed from the text files will result in their respective directory removal from `C:\Tools` only. You must still uninstall packages installed via an installer, hence, these methods, except for Winget, should only be used for simple executables. Winget uninstalls can be enforced by the aforementioned `winget-uninstall.txt` install management input file.
+
+### Windows OS Enforcement
+The following Windows 10/11 Operating System settings are enforced
+* Audit logging for `logon` and `logoff` events
+* Windows File Explorer - Enable viewable file extensions
 
 ### Email Alerting
 Email alerts will be generated with an attached log file if any of the following issues are detected by the `enforce-checker.sh` cron job:
@@ -101,7 +106,7 @@ Email alerts will be generated with an attached log file if any of the following
 * Check if the Winget installer and uninstaller input files contain the same package
 * Certificate management files are missing such as 'certificate-refresh-FORCE_renameMe-OFF.txt' or the 'trusted-root-certificates' directory is missing.
   * Files and directories will be re-created with default settings
-*  Ensure input files are properly formatted by replacing correct [POSIX](https://unix.stackexchange.com/questions/153091/how-to-add-a-carriage-return-before-every-newline) carriage carriage returns and removing empty lines
+*  Ensure input files are properly formatted by replacing correct [POSIX](https://unix.stackexchange.com/questions/153091/how-to-add-a-carriage-return-before-every-newline) carriage returns and removes empty lines
 *  Any certs expiring within 45 days or less
   * Will continue to alert until replaced with a non-expiring cert. All cert options should be identical, such as Subject, CN, and SAN.
   * Once the expiry is 14 days or less automatic replacements will occur. These expiring certs will be removed and then added during the 14-day window.

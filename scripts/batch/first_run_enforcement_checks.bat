@@ -114,6 +114,11 @@ if %errorlevel% NEQ 0 (
 	schtasks /run /TN "Damo.net\Network Adapters - All - Reset" >> %LOGFILE%
 )
 
+:: Windows OS Settings
+
+:: File Explorer - Ensure file extensions are viewable
+reg add HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced /v HideFileExt /t REG_DWORD /d 0 /f
+
 
 :: Install Tools
 echo **Installing Tools** >> %LOGFILE%

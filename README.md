@@ -1,12 +1,13 @@
-# enforcement-script-windows
+# Windows Enforcement Script
 Enforce a suite of Installs, OS Settings, and Trusted Root Certificates with an output file sent to email when any issues or warnings are detected.
 
 This is where automation and enforcement scripts are synchronized to Windows client hosts within Damo.net.
 
 ### Target Host Pre-reqs
 1. [Winget](https://learn.microsoft.com/en-us/windows/package-manager/winget/) and [OpenSSL](https://winstall.app/apps/ShiningLight.OpenSSL) are installed
-2. Ensure the drive letter `Z` is unused
-3. Ensure the folder `C:\Tools` is unused
+   1. [robocopy](https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/robocopy) is also required but should be already included in Windows 10 or higher by default
+3. Ensure the drive letter `Z` is unused
+4. Ensure the folder `C:\Tools` is unused
 
 ### Installation steps for all new clients
 1. Ensure the client is connected to the workgroup, DAMO.NET
@@ -17,16 +18,40 @@ This is where automation and enforcement scripts are synchronized to Windows cli
 6. Delete the manually executed `first_run_enforcement_checks.bat` file (which should *not* be the `C:\script\batch\first_run_enforcement_checks.bat` copy).
 
 ### NAS Installation
-1. Place a copy of the entire enforcement-script-windows folder somewhere within the directory structure of the NAS
-2. Update the `first_run_enforcement_checks.bat` script to rsync from this NAS location via the full path from the client's 'Z' drive mapping.
-3. Create a cronjob that runs once per day and executes the `enforce-checker.sh` script from the NAS device.
-4. The NAS' IP must be `10.10.0.10`
-5. Additional home networks may be added by following instructions within the `first_run_enforcement_checks.bat` per the snippet:
-  6. ```batch
+1. Place a copy of the entire enforcement-script-windows folder somewhere within the directory structure of the NAS and create a Shared Folder with read-only permissions.
+2. Update the `first_run_enforcement_checks.bat` script to robocopy from the Shared Folder root recursively via the full path from the client's 'Z' drive mapping, per the snippet:
+  3. ```batch
+      :: check if drive is mapped, if not, ping NAS, if fails, skip, otherwise, re-map
+      if not exist Z:\ (
+      	echo mapped drive not found, pinging NAS >> %LOGFILE%
+      	:: use IP of NAS device
+      	ping -n 1 10.10.0.1 | find "TTL"
+      	if not errorlevel 1 (
+      		echo re-mapping NAS, ping responded >> %LOGFILE%
+      		goto resync
+      	) else (
+      		echo cannot ping NAS, either down or off the network >> %LOGFILE%
+      		echo will attempt remaining enforcecment tasks, which will fail if at least one sync has not occured >> %LOGFILE%
+      	) 
+      ) else (
+      	if exist Z:\damo-net\automation\enforcement\scripts\batch\first_run_enforcement_checks.bat (
+      		goto resync
+      	) else (
+      		*** echo Z drive mapping is incorrect. Unamp existing Z drive, then try again *** >> %LOGFILE%
+      	)
+      )
+     ``` 
+4. Create a cronjob that runs once per day and executes the `enforce-checker.sh` script from the NAS device.
+5. The NAS' IP must be `10.10.0.10`
+6. Additional home networks may be added by following instructions within the `first_run_enforcement_checks.bat` assuming NAS replication exists and the drive letter persists, per the snippet:
+  7. ```batch
      :: copy and paste the below 2 lines for each network, updating the FQDN of the router hostname and IP and updating the integer value for neterror array
      ping -n 1 10.10.0.1 | find "TTL" && ping -n 1 -a 10.10.0.1 | find "RT-AC5300-C300" && ipconfig | find "DAMO.NET"
      set neterror[0]=%errorlevel%
-     ```  
+     ```
+#### Permissioning
+* Read access should be the default permission for the parent and subdirectories of the Shared Folder to allow for local Windows [robocopy](https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/robocopy) to copy the data.
+* Write access should only be granted to admins designated to determine host enforcement.
 
 ### Updating files
 From the NAS drive's enforcement folder, make changes to any file and it will sync and either execute or install.
@@ -77,3 +102,6 @@ Email alerts will be generated with an attached log file if any of the following
 * Certificate management files are missing such as 'certificate-refresh-FORCE_renameMe-OFF.txt' or the 'trusted-root-certificates' directory is missing.
   * Files and directories will be re-created with default settings
 *  Ensure input files are properly formatted by replacing correct Posix carriage carriage returns and removing empty lines
+*  Any certs expiring within 45 days or less
+  * Will continue to alert until replaced with a non-expiring cert. All cert options should be identical, such as Subject, CN, and SAN.
+  * Once the expiry is 14 days or less automatic replacements will occur. These expiring certs will be removed and then added during the 14-day window.

@@ -3,6 +3,14 @@ Enforce a suite of Installs, OS Settings, and Trusted Root Certificates with an 
 
 This is where automation and enforcement scripts are synchronized to Windows client hosts within Damo.net.
 
+### How the process works
+The file will first create and copy itself to `C:\scripts\batch`, then kick off the file sync between the NAS enforcement folder and the `C:\scripts` folder locally.
+Once syncing completes, all the required files, scripts, and scheduled tasks will be created and then executed.
+
+The 'First Run Enforcement Checks' scheduled task re-runs the above process from within the scripts folder every startup, and then every 2 hours indefinitely.
+Any changes made to the scripts directory will automatically be copied to the clients, enabling a method for centrally managing Windows hosts.
+All scheduled tasks are located within the newly created `Damo.net` folder. (within the Task Scheduler program)
+
 ### Target Host Pre-reqs
 1. [Winget](https://learn.microsoft.com/en-us/windows/package-manager/winget/) and [OpenSSL](https://winstall.app/apps/ShiningLight.OpenSSL) are installed
    1. [robocopy](https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/robocopy) is also required but should be already included in Windows 10 or higher by default
@@ -71,14 +79,6 @@ Scripts executed manually will output logging data to the logged-in user's temp 
 Scripts executed via task scheduler, even if executed manually, will output logging data from the system's specified log directory --> `%temp%\damo-net\logs` (`C:\Windows\temp`)
 A new log is generated with the execution's point-in-time date and time stamp appended.
 
-### How the process works
-The file will first create and copy itself to `C:\scripts\batch`, then kick off the file sync between the NAS enforcement folder and the `C:\scripts` folder locally.
-Once syncing completes, all the required files, scripts, and scheduled tasks will be created and then executed.
-
-The 'First Run Enforcement Checks' scheduled task re-runs the above process from within the scripts folder every startup, and then every 2 hours indefinitely.
-Any changes made to the scripts directory will automatically be copied to the clients, enabling a method for centrally managing Windows clients.
-All scheduled tasks are located within the newly created `Damo.net` folder. (within the Task Scheduler program)
-
 If the client is off the network, the script will attempt to execute enforcement tasks, which are expected to fail if at least one sync has not occurred or if the files were deleted within the local scripts folder. The next successful re-sync will re-create any missing files.
 
 ### Managing Installs
@@ -94,7 +94,7 @@ There are four files within the scripts\batch folder which reference the followi
 Except for 'widget-install.txt', items removed from the text files will result in their respective directory removal from `C:\Tools` only. You must still uninstall packages installed via an installer, hence, these methods, except for Winget, should only be used for simple executables. Winget uninstalls can be enforced by the aforementioned `winget-uninstall.txt` install management input file.
 
 ### Windows OS Enforcement
-The following Windows 10/11 Operating System settings are enforced
+The following Windows 10/11 Operating System settings are enforced. Explorer.exe will not be rebooted in favor of an uninterrupted end-user experience. Instead, settings will take effect on the next reboot.
 * Audit logging for `logon` and `logoff` events
 * Windows File Explorer - Enable viewable file extensions
 

@@ -48,13 +48,13 @@ if not exist Z:\ (
 		goto resync
 	) else (
 		echo cannot ping NAS, either down or off the network >> %LOGFILE%
-		echo will attempt remaining enforcecment tasks, which will fail if at least one sync has not occured >> %LOGFILE%
+		echo will attempt remaining enforcement tasks, which will fail if at least one sync has not occured >> %LOGFILE%
 	) 
 ) else (
 	if exist Z:\damo-net\automation\enforcement\scripts\batch\first_run_enforcement_checks.bat (
 		goto resync
 	) else (
-		*** echo Z drive mapping is incorrect. Unamp existing Z drive, then try again *** >> %LOGFILE%
+		*** echo Z drive mapping is incorrect. Un-map existing Z drive, then try again *** >> %LOGFILE%
 	)
 )
 

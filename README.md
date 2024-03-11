@@ -31,13 +31,13 @@ This is where automation and enforcement scripts are synchronized to Windows cli
       		goto resync
       	) else (
       		echo cannot ping NAS, either down or off the network >> %LOGFILE%
-      		echo will attempt remaining enforcecment tasks, which will fail if at least one sync has not occured >> %LOGFILE%
+      		echo will attempt remaining enforcement tasks, which will fail if at least one sync has not occurred >> %LOGFILE%
       	) 
       ) else (
       	if exist Z:\damo-net\automation\enforcement\scripts\batch\first_run_enforcement_checks.bat (
       		goto resync
       	) else (
-      		*** echo Z drive mapping is incorrect. Unamp existing Z drive, then try again *** >> %LOGFILE%
+      		*** echo Z drive mapping is incorrect. Un-map existing Z drive, then try again *** >> %LOGFILE%
       	)
       )
      ``` 
@@ -49,7 +49,7 @@ This is where automation and enforcement scripts are synchronized to Windows cli
      ping -n 1 10.10.0.1 | find "TTL" && ping -n 1 -a 10.10.0.1 | find "RT-AC5300-C300" && ipconfig | find "DAMO.NET"
      set neterror[0]=%errorlevel%
      ```
-#### Permissioning
+#### Permissions
 * Read access should be the default permission for the parent and subdirectories of the Shared Folder to allow for local Windows [robocopy](https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/robocopy) to copy the data.
 * Write access should only be granted to admins designated to determine host enforcement.
 
@@ -77,7 +77,7 @@ Once syncing completes, all the required files, scripts, and scheduled tasks wil
 
 The 'First Run Enforcement Checks' scheduled task re-runs the above process from within the scripts folder every startup, and then every 2 hours indefinitely.
 Any changes made to the scripts directory will automatically be copied to the clients, enabling a method for centrally managing Windows clients.
-All scheduled tasks are located within the newly created Damo.net folder. (within the Task Scheduler program)
+All scheduled tasks are located within the newly created `Damo.net` folder. (within the Task Scheduler program)
 
 If the client is off the network, the script will attempt to execute enforcement tasks, which are expected to fail if at least one sync has not occurred or if the files were deleted within the local scripts folder. The next successful re-sync will re-create any missing files.
 
@@ -101,7 +101,7 @@ Email alerts will be generated with an attached log file if any of the following
 * Check if the Winget installer and uninstaller input files contain the same package
 * Certificate management files are missing such as 'certificate-refresh-FORCE_renameMe-OFF.txt' or the 'trusted-root-certificates' directory is missing.
   * Files and directories will be re-created with default settings
-*  Ensure input files are properly formatted by replacing correct Posix carriage carriage returns and removing empty lines
+*  Ensure input files are properly formatted by replacing correct [POSIX](https://unix.stackexchange.com/questions/153091/how-to-add-a-carriage-return-before-every-newline) carriage carriage returns and removing empty lines
 *  Any certs expiring within 45 days or less
   * Will continue to alert until replaced with a non-expiring cert. All cert options should be identical, such as Subject, CN, and SAN.
   * Once the expiry is 14 days or less automatic replacements will occur. These expiring certs will be removed and then added during the 14-day window.

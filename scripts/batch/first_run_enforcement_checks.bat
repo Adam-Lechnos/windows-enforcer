@@ -115,10 +115,11 @@ if %errorlevel% NEQ 0 (
 )
 
 :: Windows OS Settings
+echo Windows OS Settings >> %LOGFILE
 
 :: File Explorer - Ensure file extensions are viewable
 reg add HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced /v HideFileExt /t REG_DWORD /d 0 /f
-
+if %errorlevel% NEQ 0 (echo "File Explorer - enable viewable extensions failed")
 
 :: Install Tools
 echo **Installing Tools** >> %LOGFILE%

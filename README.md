@@ -5,8 +5,9 @@ This is where automation and enforcement scripts are synchronized to Windows cli
 
 ### Target Host Pre-reqs
 1. [Winget](https://learn.microsoft.com/en-us/windows/package-manager/winget/) and [OpenSSL](https://winstall.app/apps/ShiningLight.OpenSSL) are installed
-2. Ensure the drive letter `Z` is unused
-3. Ensure the folder `C:\Tools` is unused
+   1. [robocopy](https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/robocopy) is also required but should be already included in Windows 10 or higher by default
+3. Ensure the drive letter `Z` is unused
+4. Ensure the folder `C:\Tools` is unused
 
 ### Installation steps for all new clients
 1. Ensure the client is connected to the workgroup, DAMO.NET

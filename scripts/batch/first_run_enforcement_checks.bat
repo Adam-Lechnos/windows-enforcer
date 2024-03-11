@@ -7,9 +7,6 @@ set LOGFILE=%temp%\damo_net\logs\first-run-enforcement-%TIMESTAMP%.log
 
 if not exist %temp%\damo_net\logs\ (mkdir %temp%\damo_net\logs\)
 if not exist C:\scripts\batch\install_removal (mkdir C:\scripts\batch\install_removal)
-if not exist C:\scripts\batch\github-raw-installs.txt (break>"C:\scripts\batch\github-raw-installs.txt")
-if not exist C:\scripts\batch\github-release-installs.txt (break>"C:\scripts\batch\github-release-installs.txt")
-if not exist C:\scripts\batch\winget-installs.txt (break>"C:\scripts\batch\winget-installs.txt")
 
 
 :: Main entry point for running enforcement and syncing data for Damo.net admin settings. Never rename or delete this file.
@@ -126,7 +123,7 @@ echo *winget installs* >> %LOGFILE%
 
 winget -v
 if not errorlevel 0 (
-	echo install App Installer from the Microsoft Store >> %LOGFILE%
+	echo "install 'App Installer' from the Microsoft Store for winget install feature" >> %LOGFILE%
 	exit
 )
 
@@ -134,6 +131,8 @@ for /F "tokens=*" %%A in (C:\scripts\batch\winget-installs.txt) do (
 	winget list %%A >> %LOGFILE%
 	if not errorlevel 0 (
 	winget install %%A -h --accept-package-agreements --accept-source-agreements --no-upgrade >> %LOGFILE% && echo installed %%A >> %LOGFILE%
+	) else (
+		echo "winget package already installed - %%A" >> %LOGFILE%
 	)
 )
 
@@ -227,6 +226,25 @@ if exist C:\scripts\batch\install-removal\install_remove.txt (
     rmdir /s/q C:\Tools\!remove!
 	echo removing !remove! >> %LOGFILE%
   )
+)
+
+:: Remove winget installs listed within the winget-uninstalls input file
+echo *processing winget uninstalls* >> %LOGFILE%
+for /F "tokens=*" %%A in (C:\scripts\batch\winget-uninstalls.txt) do (
+	set wgremove=%%A
+	findstr /r /s /i /m /c:"\<!wgremove!\>" "C:\scripts\batch\winget-installs.txt"
+	if not errorlevel 1 (
+		echo "winget uninstall conflict for '!wgremove!' - present in install input as well, skipping" >> %LOGFILE%
+	) else (
+		: winget install !wgremove! --force --override "/uninstall /silent"
+		echo attempting winget uninstall - !wgremove! >> %LOGFILE%
+		winget uninstall !wgremove! -h --force --purge --disable-interactivity >> %LOGFILE%
+		if not errorlevel 0 (
+			echo "package already uninstalled or not found - !wgremove!" >> %LOGFILE%
+			) else (
+				echo uninstalled winget install - !wgremove! >> %LOGFILE%
+			) 
+	)
 )
 
 echo **End Tools Installs** >> %LOGFILE%

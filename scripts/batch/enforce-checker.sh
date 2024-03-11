@@ -9,6 +9,32 @@ fi
 
 #echo "[info] Working Directory: $(pwd)" >> $outputlist
 
+## check for install management input files and directories and create if missing
+if ! [ -f ./winget-installs.txt ]
+then
+  touch ./winget-install.txt
+fi
+
+if ! [ -f ./winget-uninstalls.txt ]
+then
+  touch ./winget-install.txt
+fi
+
+if ! [ -f ./github-release-install.txt ]
+then
+  touch ./winget-install.txt
+fi
+
+if ! [ -f ./github-raw-installs.txt ]
+then
+  touch ./winget-install.txt
+fi
+
+if ! [ -d ./install-removal ]
+then
+  mkdir install-removal
+fi
+
 ## check winget list
 listwinget="./winget-installs.txt"
 while read -r line || [ -n "$line" ]
@@ -20,6 +46,18 @@ do
     echo winget issue = $line >> $outputlist
   fi
 done < "$listwinget"
+
+## check winget uninstall list
+listwingetrm="./winget-uninstalls.txt"
+while read -r line || [ -n "$line" ]
+do
+  curl -s https://winstall.app/apps/$line | grep 'To install' >/dev/null
+  rc=$?
+  if (($rc == 1))
+  then
+    echo winget uninstall issue = $line >> $outputlist
+  fi
+done < "$listwingetrm"
 
 ## check github release list
 listghrelease="./github-release-install.txt"

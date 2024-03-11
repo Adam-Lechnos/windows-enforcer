@@ -1,1 +1,0 @@
-cert force refresh active = [certificate-refresh_FORCE_renameMe-ON.txt] is active - opted in hosts will first remove all available certs within '../../trusted-root-certificates' for hosts listed in 'certificate-refresh_FORCE_LIST.txt'

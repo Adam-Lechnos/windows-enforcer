@@ -67,6 +67,19 @@ mkdir %temp%\damo_net\trusted-root-certificates
 :: sync trusted root certificates
 robocopy C:\test\trusted-root-certificates %temp%\damo_net\trusted-root-certificates /MIR  >> %LOGFILE%
 
+echo "*tamper protection*" >> %LOGFILE%
+:: lock down local C:\scripts directory and all child objects
+echo "**locking down C:\Scripts directory**" >> %LOGFILE%
+icacls c:\scripts\ /reset /q /c /t >> %LOGFILE%
+icacls c:\scripts\ /inheritance:d >> %LOGFILE%
+icacls c:\scripts\ /setowner "Administrators" /q /c /t >> %LOGFILE%
+icacls c:\scripts\ /remove:g "Users" /q /c /t >> %LOGFILE%
+icacls c:\scripts\ /remove:g "Authenticated Users" /q /c /t >> %LOGFILE%
+icacls c:\scripts\ /grant "Users":(R) /q /c /t >> %LOGFILE%
+
+:: locking down task scheduler - prevent deletion
+@REM reg add "HKEY_LOCAL_MACHINE\Software\Policies\Microsoft\Windows\Task Scheduler5.0" /v "Task Deletion" /t REG_DWORD /d 0 /f
+
 :: remove all certs before installing for hosts opted into force cert refresh list with flag set to ON
 if exist C:\scripts\batch\featureFlags-first-run_enforcement_checks\certificate-refresh_FORCE_renameMe-ON.txt (
 	FOR /F "tokens=* USEBACKQ" %%F IN (`hostname`) DO (
@@ -78,18 +91,6 @@ if exist C:\scripts\batch\featureFlags-first-run_enforcement_checks\certificate-
 	  )  
   )
 )
-
-:: lock down local C:\scripts directory and all child objects
-echo "*locking down C:\Scripts directory*" >> %LOGFILE%
-icacls c:\scripts\ /reset /q /c /t >> %LOGFILE%
-icacls c:\scripts\ /inheritance:d >> %LOGFILE%
-icacls c:\scripts\ /setowner "Administrators" /q /c /t >> %LOGFILE%
-icacls c:\scripts\ /remove:g "Users" /q /c /t >> %LOGFILE%
-icacls c:\scripts\ /remove:g "Authenticated Users" /q /c /t >> %LOGFILE%
-icacls c:\scripts\ /grant "Users":(R) /q /c /t >> %LOGFILE%
-
-:: locking down task scheduler - prevent deletion
-@REM reg add "HKEY_LOCAL_MACHINE\Software\Policies\Microsoft\Windows\Task Scheduler5.0" /v "Task Deletion" /t REG_DWORD /d 0 /f
 
 :: remove certs within revokation list
 if exist C:\scripts\batch\cert-removal\cert-revoked.txt (

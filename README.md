@@ -1,6 +1,8 @@
 # Windows Enforcement Script
 Enforce a suite of Installs, OS Settings, and Trusted Root Certificates with an output file sent to email when any issues or warnings are detected.
 
+![]()
+
 This is where automation and enforcement scripts are synchronized to Windows client hosts within Damo.net.
 
 ### How the process works

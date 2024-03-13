@@ -107,10 +107,11 @@ Except for 'widget-install.txt', items removed from the text files will result i
 ### Managing Trusted Root Certificates
 Trusted Root Certificates may be added for home network devices that contain a web interface for TLS, such as a router's admin UI. This feature can be used to ensure all hosts receive the Trusted Root Certificate applied to the Computer setting of the Certificate Manager
 * `trusted-root-certificates` folder is where the trusted root certificate should be placed. Once copied locally by the enforcement script, the certificate will be installed on the local host.
-  * Certs within a 45-day or less certificate expiry will trigger an email alert via the `enforce-checker.sh` hook.
+  * Certs within a 45-day or less certificate expiry will trigger an email alert via the [Enforcement Checker](#enforcement-checker) hook.
   * Email alerts will trigger and apply to the attached report until the cert is renewed. Ensure the same cert options are specified such as the CN, Subject, and SAN.
 * Within 14 days are less of the cert expiry, the certificate will be placed on the refresh list, `certificate-refresh_renameMe-ON.txt`, located within the `batch\featureFlags-first-run_enforcement_checks` directory, which instructs all hosts to first remove the cert from the local Certificate Manager before installing the newly added cert dropped into the `trusted-root-certificates` directory.
   * After the 14-day window, any offline hosts will require a forced refresh. Rename `certificate-refresh_FORCE_renameMe-OFF.txt` within the `batch\featureFlags-first-run_enforcement_checks` directory, changing the text `OFF` to `ON`. Then add the hosts that missed the 14-day window or were off the home network.
+    * Hostnames that are not resolvable will trigger an error during an [Enforcement Checker](#enforcement-checker) email. 
   * Upon the next enforcement run, only those hosts listed within the `certificate-refresh_FORCE_renameMe-ON.txt` will first remove the certificate from the local Certificate Manager, then install the non-expiring replacement.
 * Certificates removed from the `trusted-root-certificates` folder are automatically placed on a revocation list, `cert-revoked.txt`
   * Certificates present within the `cert-revoked.txt` are automatically removed from the local Certificate Manager.
@@ -122,7 +123,9 @@ The following Windows 10/11 Operating System settings are enforced. Explorer.exe
 * Audit logging for `logon` and `logoff` events
 * Windows File Explorer - Enable viewable file extensions
 
-### Email Alerting
+### Enforcement Checker
+Enforcement checker runs via cron to check for proper file and folder hygiene. It ensure the requisite certificate and installer management files are present and formatted correctly. Email alerts are sent out if any issues are detected including certain informational and warning types.
+#### Email Alerting
 Email alerts will be generated with an attached log file if any of the following issues are detected by the `enforce-checker.sh` cron job:
 * Installer management files are missing such as 'winget-install.txt' or the 'install-removal' directory is missing
   * Files and directories will be re-created without input or data

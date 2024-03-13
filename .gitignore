@@ -1,5 +1,6 @@
 **/*.crt
 **/github-raw-install.txt
+**/github-raw-installs.txt
 **/github-release-install.txt
 **/winget-install.txt
 **/winget-uninstalls.txt

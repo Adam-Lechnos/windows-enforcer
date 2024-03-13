@@ -1,6 +1,8 @@
 # Windows Enforcement Script
 Enforce a suite of Installs, OS Settings, and Trusted Root Certificates with an output file sent to email when any issues or warnings are detected.
 
+<sup><sub>Public Repo Version: [enforcement-script-windows](https://github.com/Adam-Lechnos/windows-enforcer)</sup></sub>
+
 ![Diagram](./windows-enforcement-diagram.drawio.svg)
 
 ### Overview

@@ -7,3 +7,5 @@
 **/certificate-refresh_FORCE_renameMe-OFF.txt
 **/certificate-refresh_renameMe-ON.txt
 **/certificate-refresh_FORCE_LIST.txt
+**/certificate-present-list*
+**/cert-revoked*

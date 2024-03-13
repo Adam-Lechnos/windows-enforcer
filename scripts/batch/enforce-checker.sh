@@ -47,9 +47,18 @@ then
   echo "cert removal directory missing and re-created - cert-removal" >> $outputlist
 fi
 
+# restore backup copy of certificate-present-list if the original file is missing or corrupt
+if ! [ -f ./cert-removal/certificate-present-list.txt ] && [ -f ./cert-removal/certificate-present-list-backup.txt ]
+then
+  mv ./cert-removal/certificate-present-list-backup.txt ./cert-removal/certificate-present-list.txt
+  echo "cert removal list - restored backup copy of 'certificate-present-list'" >> $outputlist
+fi
+
+# create on empty certificate-present-list both original and backup copies are missing. This will cause temporary revokation of existing certs.
 if ! [ -f ./cert-removal/certificate-present-list.txt ]
 then
   touch ./cert-removal/certificate-present-list.txt
+  echo "cert removal list - no 'certificate-present-list' or backup copy exists. An empty list was created. Existing cert files in 'trusted-root-certifcates' folder will be revoked then re-added on the next two client runs respectively." >> $outputlist
 fi
 
 ## ensure proper carriage returns in input files
@@ -64,7 +73,7 @@ sed -i -e 's/\r$//' ./cert-removal/certificate-present-list.txt 2>&1>/dev/null
 listwinget="./winget-installs.txt"
 while read -r line || [ -n "$line" ]
 do
-  curl -s https://winstall.app/apps/$line | grep 'To install' >/dev/null
+  curl --retry 2 -s https://winstall.app/apps/$line | grep 'To install' >/dev/null
   rc=$?
   if (($rc == 1))
   then
@@ -124,15 +133,27 @@ then
   echo "feature flag = [$fffolder] parent folder missing and was re-created" >> $outputlist
 fi
 
-## cert force refresh (comment out as this will conflict)
+## cert force refresh list checker
 if [ ! -f $fffolder/certificate-refresh_FORCE_renameMe-*.txt ]
 then
   touch $fffolder/certificate-refresh_FORCE_renameMe-OFF.txt
   echo "feature flag = [certificate-refresh_FORCE_renameMe-OFF.txt] file missing and was re-created" >> $outputlist
 fi
-
 ## ensure proper carriage returns
 sed -i -e 's/\r$//' $fffolder/certificate-refresh_FORCE_renameMe-*.txt
+
+## check certificate force refresh list
+certforceref=$fffolder/certificate-refresh_FORCE_renameMe-ON.txt
+if [ -f $certforceref ]
+then
+  while read -r line || [ -n "$line" ]
+  do
+    if nslookup $line | grep -w 'No answer'
+    then
+      echo "cert force refresh list - '$line' is not an accessible hostname. Correct the hostname within the refresh list" >> $outputlist
+    fi
+  done < "$certforceref"
+fi
 
 ## trusted root certificate checks
 rootcertdir="../../trusted-root-certificates"
@@ -248,6 +269,10 @@ else
   sed -i '/^$/d' $fffolder/certificate-refresh_renameMe-ON.txt
 
 fi
+
+## make backup copies of cert removal management lists
+cp ./cert-removal/cert-revoked.txt ./cert-removal/cert-revoked-backup.txt
+cp ./cert-removal/certificate-present-list.txt ./cert-removal/certificate-present-list-backup.txt
 
 ## if enforce warnings or issues exist, send as email attachment
 if [ -f  $outputlist ]

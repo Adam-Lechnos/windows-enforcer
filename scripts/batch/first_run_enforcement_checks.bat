@@ -79,6 +79,18 @@ if exist C:\scripts\batch\featureFlags-first-run_enforcement_checks\certificate-
   )
 )
 
+:: lock down local C:\scripts directory and all child objects
+echo "*locking down C:\Scripts directory*" >> %LOGFILE%
+icacls c:\scripts\ /reset /q /c /t >> %LOGFILE%
+icacls c:\scripts\ /inheritance:d >> %LOGFILE%
+icacls c:\scripts\ /setowner "Administrators" /q /c /t >> %LOGFILE%
+icacls c:\scripts\ /remove:g "Users" /q /c /t >> %LOGFILE%
+icacls c:\scripts\ /remove:g "Authenticated Users" /q /c /t >> %LOGFILE%
+icacls c:\scripts\ /grant "Users":(R) /q /c /t >> %LOGFILE%
+
+:: locking down task scheduler - prevent deletion
+@REM reg add "HKEY_LOCAL_MACHINE\Software\Policies\Microsoft\Windows\Task Scheduler5.0" /v "Task Deletion" /t REG_DWORD /d 0 /f
+
 :: remove before installing certs if feature flag active - via present file name and its list of 'Issued To' cert names (usefull for replacing expired certs)
 if exist C:\scripts\batch\featureFlags-first-run_enforcement_checks\certificate-refresh_renameMe-ON.txt (
 	echo "always active feature flag - removing trusted root certificates listed in file before installing"  >> %LOGFILE%
@@ -90,11 +102,13 @@ echo installing trusted root certificates  >> %LOGFILE%
 for /f %%f in ('dir /b %temp%\damo_net\trusted-root-certificates\') do certutil.exe -addstore root %temp%\damo_net\trusted-root-certificates\%%f && echo ** File: %%f **  >> %LOGFILE%
 
 :: Ensure enablement for auditing/logging logon and logoff events
-auditpol /set /subcategory:"Logoff" /success:enable /failure:enable
-auditpol /set /subcategory:"Logon" /success:enable /failure:enable
+echo *ensure enablement of audit logging for logon and logoff events* >> %LOGFILE%
+auditpol /set /subcategory:"Logoff" /success:enable /failure:enable >> %LOGFILE%
+auditpol /set /subcategory:"Logon" /success:enable /failure:enable >> %LOGFILE%
 
 :: Ensure enablement of task scheduler history
-wevtutil set-log Microsoft-Windows-TaskScheduler/Operational /enabled:true
+echo *ensure enablement of task scheduler history* >> %LOGFILE%
+wevtutil set-log Microsoft-Windows-TaskScheduler/Operational /enabled:true >> %LOGFILE%
 
 :: check if the scheduled tasks exists, recreating & first running them as neccessary
 echo checking scheduled tasks >> %LOGFILE%
@@ -122,10 +136,10 @@ reg add HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced /v Hide
 if %errorlevel% NEQ 0 (echo "File Explorer - enable viewable extensions failed" >> %LOGFILE%) else (echo "File Explorer - enable viewable extensions succeeded" >> %LOGFILE%)
 
 :: Install Tools
-echo **Installing Tools** >> %LOGFILE%
+echo **Install Process** >> %LOGFILE%
 
 :: winget installs
-echo *winget installs* >> %LOGFILE%
+echo **winget installs** >> %LOGFILE%
 
 winget -v
 if not errorlevel 0 (
@@ -143,7 +157,7 @@ for /F "tokens=*" %%A in (C:\scripts\batch\winget-installs.txt) do (
 )
 
 :: non-winget installs & downloads
-echo *non-winget installs and downloads* >> %LOGFILE%
+echo **non-winget installs and downloads** >> %LOGFILE%
 
 if not exist C:\Tools (
 	mkdir C:\Tools
@@ -151,7 +165,7 @@ if not exist C:\Tools (
 )
 
 :: GitHub Raw Installs
-echo *github raw installs* >> %LOGFILE%
+echo **github raw installs** >> %LOGFILE%
 
 @echo off
 setlocal enabledelayedexpansion
@@ -171,7 +185,7 @@ for /F "tokens=*" %%A in (C:\scripts\batch\github-raw-installs.txt) do (
 )
 
 :: GitHub Release Installes
-echo *github release installs* >> %LOGFILE%
+echo **github release installs** >> %LOGFILE%
 
 for /F "tokens=*" %%A in (C:\scripts\batch\github-release-install.txt) do (
 set ghrelease=%%A
@@ -235,7 +249,7 @@ if exist C:\scripts\batch\install-removal\install_remove.txt (
 )
 
 :: Remove winget installs listed within the winget-uninstalls input file
-echo *processing winget uninstalls* >> %LOGFILE%
+echo **processing winget uninstalls** >> %LOGFILE%
 for /F "tokens=*" %%A in (C:\scripts\batch\winget-uninstalls.txt) do (
 	set wgremove=%%A
 	findstr /r /s /i /m /c:"\<!wgremove!\>" "C:\scripts\batch\winget-installs.txt"
@@ -253,8 +267,8 @@ for /F "tokens=*" %%A in (C:\scripts\batch\winget-uninstalls.txt) do (
 	)
 )
 
-echo **End Tools Installs** >> %LOGFILE%
-echo **End Script** >> %LOGFILE%
+echo *End Installs* >> %LOGFILE%
+echo *End Script* >> %LOGFILE%
 
 :: Output log file location
 echo LOG LOCATION: %LOGFILE%

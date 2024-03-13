@@ -41,11 +41,24 @@ then
   echo "install management directory missing and re-created - install-removal" >> $outputlist
 fi
 
+if ! [ -d ./cert-removal ]
+then
+  mkdir ./cert-removal
+  echo "cert removal directory missing and re-created - cert-removal" >> $outputlist
+fi
+
+if ! [ -f ./cert-removal/certificate-present-list.txt ]
+then
+  touch ./cert-removal/certificate-present-list.txt
+fi
+
 ## ensure proper carriage returns in input files
-sed -i -e 's/\r$//' ./winget-installs.txt
-sed -i -e 's/\r$//' ./winget-uninstalls.txt
-sed -i -e 's/\r$//' ./github-release-install.txt
-sed -i -e 's/\r$//' ./github-raw-installs.txt
+sed -i -e 's/\r$//' ./winget-installs.txt 2>&1>/dev/null
+sed -i -e 's/\r$//' ./winget-uninstalls.txt 2>&1>/dev/null
+sed -i -e 's/\r$//' ./github-release-install.txt 2>&1>/dev/null
+sed -i -e 's/\r$//' ./github-raw-installs.txt 2>&1>/dev/null
+sed -i -e 's/\r$//' ./cert-removal/cert-revoked.txt 2>&1>/dev/null
+sed -i -e 's/\r$//' ./cert-removal/certificate-present-list.txt 2>&1>/dev/null
 
 ## check winget list
 listwinget="./winget-installs.txt"
@@ -144,11 +157,57 @@ if [ -z "$(ls -A $rootcertdir)" ]
 then
 
   echo "cert folder $rootcertdir is empty - skipping enumeration of certifcates"
+  listlastruncrt="./cert-removal/certificate-present-list.txt"
+  while read -r line || [ -n "$line" ]
+  do
+    echo $line >> ./cert-removal/cert-revoked.txt
+    sed -i "s/$line//" ./cert-removal/certificate-present-list.txt 2>&1>/dev/null
+    echo cert revocation - $line >> $outputlist
+  done < "$listlastruncrt"
+  awk -i inplace '!seen[$0]++' ./cert-removal/cert-revoked.txt 2>&1>/dev/null
+  sed -i '/^$/d' ./cert-removal/certificate-present-list.txt 2>&1>/dev/null
+  sed -i '/^$/d' ./cert-removal/cert-revoked.txt 2>&1>/dev/null
 
 else
 
   for certfile in $rootcertdir/*
   do
+    
+    ## create list of certs to check for removal on current run
+    listpresentcertscr=$(openssl x509 -in $certfile -noout -subject | sed -e "s/ //g" | sed -n '/^subject/s/^.*CN=//p')
+    echo $listpresentcertscr >> ./cert-removal/certificate-present-list-current-run.txt
+
+    ## reconcile both cert removal lists to check for cert removal action
+    listlastruncrt="./cert-removal/certificate-present-list.txt"
+    while read -r line || [ -n "$line" ]
+    do
+      if ! cat ./cert-removal/certificate-present-list-current-run.txt | grep -w $line >/dev/null
+      then
+        echo $line >> ./cert-removal/cert-revoked.txt
+        sed -i "s/$line//" ./cert-removal/certificate-present-list.txt 2>&1>/dev/null
+        echo cert revocation - $line >> $outputlist
+      fi
+    done < "$listlastruncrt"
+    awk -i inplace '!seen[$0]++' ./cert-removal/cert-revoked.txt 2>&1>/dev/null
+    sed -i '/^$/d' ./cert-removal/cert-revoked.txt
+
+    ## create list of certs to check for removal on next run
+    listpresentcerts=$(openssl x509 -in $certfile -noout -subject | sed -e "s/ //g" | sed -n '/^subject/s/^.*CN=//p')
+    if ! cat ./cert-removal/certificate-present-list.txt | grep -w $listpresentcerts >/dev/null
+    then
+      echo $listpresentcerts >> ./cert-removal/certificate-present-list.txt
+    fi
+    sed -i '/^$/d' ./cert-removal/certificate-present-list.txt 2>&1>/dev/null
+    rm -f ./cert-removal/certificate-present-list-current-run.txt 2>&1>/dev/null
+
+    ## remove cert from revocation list if cert CN is the same as a revoked cert - for newly added certs (assumes new expiration date and fingerprint)
+    removerevoke=$(openssl x509 -in $certfile -noout -subject | sed -e "s/ //g" | sed -n '/^subject/s/^.*CN=//p')
+    if cat ./cert-removal/cert-revoked.txt | grep -w $removerevoke >/dev/null
+    then
+      sed -i "s/$removerevoke//" ./cert-removal/cert-revoked.txt 2>&1>/dev/null
+      sed -i '/^$/d' ./cert-removal/cert-revoked.txt
+      echo cert revocation removal - $removerevoke >> $outputlist
+    fi
 
     ## force refresh cert list for opted in hosts
     if [ -f $fffolder/certificate-refresh_FORCE_renameMe-ON.txt ]
@@ -180,6 +239,9 @@ else
       certnameRem=$(openssl x509 -in $certfile -noout -subject | sed -e "s/ //g" | sed -n '/^subject/s/^.*CN=//p')
       sed -i $fffolder/certificate-refresh_renameMe-ON.txt -e "s/$certnameRem//g"
     fi
+
+   ## check if cert was removed from the trusted-root-certificates directory
+
 
   done
   ## remove empty lines from cert feature flag file

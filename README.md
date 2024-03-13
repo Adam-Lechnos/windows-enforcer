@@ -2,6 +2,8 @@
 Enforce a suite of Installs, OS Settings, and Trusted Root Certificates with an output file sent to email when any issues or warnings are detected.
 
 ![Diagram](./windows-enforcement-diagram.drawio.svg)
+The NAS will host the enforcer and suite of files that manage the certificates and install packages. Email alerts are sent using attachments to Postfix. Crontab performs hourly reruns. The hosted files are accessible by clients on `Z:\<NAS HOST>\<PARENT DIRECTORY>`
+Local hosts are first bootstrapped, which executes a series of tasks: creating the automated scheduled tasks in the Task Scheduler, checking for the NAS device availability, and syncing the data from the device. The local enforcer script runs based on pre-defined parameters including every logon. Local install persists to the `C:\Tools` directory except for Winget-based packages. Certificates are placed within the NAS\` `trusted-root-certificates` folder. Installations and certificates may therefore be managed centrally and enforced including uninstalls and certificated renewal and revocations, without requiring a PKI setup.
 
 This is where automation and enforcement scripts are synchronized to Windows client hosts within Damo.net.
 

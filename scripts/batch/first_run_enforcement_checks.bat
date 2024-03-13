@@ -91,6 +91,17 @@ icacls c:\scripts\ /grant "Users":(R) /q /c /t >> %LOGFILE%
 :: locking down task scheduler - prevent deletion
 @REM reg add "HKEY_LOCAL_MACHINE\Software\Policies\Microsoft\Windows\Task Scheduler5.0" /v "Task Deletion" /t REG_DWORD /d 0 /f
 
+:: remove certs within revokation list
+if exist C:\scripts\batch\cert-removal\cert-revoked.txt (
+	echo "applying cert revocation for certs specified in cert-revoked.txt"  >> %LOGFILE%
+	for /F "tokens=*" %%A in (C:\scripts\batch\cert-removal\cert-revoked.txt) do (
+		certutil.exe -verifystore root %%A
+		if errorlevel 0 (
+			certutil.exe -delstore root %%A && echo ** Cert Name: %%A **  >> %LOGFILE%
+		)	
+	)
+)
+
 :: remove before installing certs if feature flag active - via present file name and its list of 'Issued To' cert names (usefull for replacing expired certs)
 if exist C:\scripts\batch\featureFlags-first-run_enforcement_checks\certificate-refresh_renameMe-ON.txt (
 	echo "always active feature flag - removing trusted root certificates listed in file before installing"  >> %LOGFILE%

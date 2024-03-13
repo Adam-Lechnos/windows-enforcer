@@ -4,12 +4,15 @@ Enforce a suite of Installs, OS Settings, and Trusted Root Certificates with an 
 This is where automation and enforcement scripts are synchronized to Windows client hosts within Damo.net.
 
 ### How the process works
-The file will first create and copy itself to `C:\scripts\batch`, then kick off the file sync between the NAS enforcement folder and the `C:\scripts` folder locally.
+Once bootstrapped, the process will first create and copy itself to `C:\scripts\batch`, then kick off the file sync between the NAS enforcement folder and the `C:\scripts` folder locally.
 Once syncing completes, all the required files, scripts, and scheduled tasks will be created and then executed.
 
 The 'First Run Enforcement Checks' scheduled task re-runs the above process from within the scripts folder every startup, and then every 2 hours indefinitely.
 Any changes made to the scripts directory will automatically be copied to the clients, enabling a method for centrally managing Windows hosts.
 All scheduled tasks are located within the newly created `Damo.net` folder. (within the Task Scheduler program)
+
+An enforcement cron job runs on the NAS which performs the management of certificates, checking of valid packages for install management options, and certificate renewal and revocation for certificate management files.
+An email alert is sent when issues are discovered with any of the install and/or certificate management files.
 
 ### Target Host Pre-reqs
 1. [Winget](https://learn.microsoft.com/en-us/windows/package-manager/winget/) and [OpenSSL](https://winstall.app/apps/ShiningLight.OpenSSL) are installed
@@ -68,6 +71,12 @@ From the NAS drive's enforcement folder, make changes to any file and it will sy
 
 **IMPORTANT** Never change the name of the file, `script\batch\first_run_enforcement_checks.bat`, either within the NAS directory or locally on any client. If the 'First Run Enforcement Checks' scheduled task is ever deleted or modified, the above steps should be followed.
 
+### Tamper Protection
+Each client runtime will ensure the following OS Settings and Windows Filesystem Permissions
+* Enable Audit logging for logon and logoff events -both success and failures
+* Lock down the directory, `C:\Scripts` with only read and list access by non-Admins within the `Users` group.
+* Scheduled tasks are only viewable/modifiable by Admins.
+
 ### Feature Flags
 The First Run Enforcement Script contains a feature flag folder, editable on the NAS enforcement folder, `\scripts\batch\featureFlags-first-run_enforcement_checks`
 Each file may be set to ON by updating the appended name accordingly.
@@ -103,6 +112,10 @@ Trusted Root Certificates may be added for home network devices that contain a w
 * Within 14 days are less of the cert expiry, the certificate will be placed on the refresh list, `certificate-refresh_renameMe-ON.txt`, located within the `batch\featureFlags-first-run_enforcement_checks` directory, which instructs all hosts to first remove the cert from the local Certificate Manager before installing the newly added cert dropped into the `trusted-root-certificates` directory.
   * After the 14-day window, any offline hosts will require a forced refresh. Rename `certificate-refresh_FORCE_renameMe-OFF.txt` within the `batch\featureFlags-first-run_enforcement_checks` directory, changing the text `OFF` to `ON`. Then add the hosts that missed the 14-day window or were off the home network.
   * Upon the next enforcement run, only those hosts listed within the `certificate-refresh_FORCE_renameMe-ON.txt` will first remove the certificate from the local Certificate Manager, then install the non-expiring replacement.
+* Certificates removed from the `trusted-root-certificates` folder are automatically placed on a revocation list, `cert-revoked.txt`
+  * Certificates present within the `cert-revoked.txt` are automatically removed from the local Certificate Manager.
+  * Certificates with the same CN added back to the `trusted-root-certificates` folder are removed from the revocation list.
+  * The text files used to track the presence and revocation of certificates are automatically backed up for redundancy. Restoration occurs when the original cert revocation files are missing or corrupted.
 
 ### Windows OS Enforcement
 The following Windows 10/11 Operating System settings are enforced. Explorer.exe will not be rebooted in favor of an uninterrupted end-user experience. Instead, settings will take effect on the next reboot.
@@ -117,6 +130,8 @@ Email alerts will be generated with an attached log file if any of the following
 * Check if the Winget installer and uninstaller input files contain the same package
 * Certificate management files are missing such as 'certificate-refresh-FORCE_renameMe-OFF.txt' or the 'trusted-root-certificates' directory is missing.
   * Files and directories will be re-created with default settings
+* Certificate has been added to the revocation list and will be removed from all clients on their next enforcement run
+  * Missing or corrupt certificate revocation management files and corrective actions.  
 *  Ensure input files are properly formatted by replacing correct [POSIX](https://unix.stackexchange.com/questions/153091/how-to-add-a-carriage-return-before-every-newline) carriage returns and removes empty lines
 *  Any certs expiring within 45 days or less
   * Will continue to alert until replaced with a non-expiring cert. All cert options should be identical, such as Subject, CN, and SAN.

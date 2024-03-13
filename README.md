@@ -6,18 +6,8 @@ Enforce a suite of Installs, OS Settings, and Trusted Root Certificates with an 
 The NAS will host the enforcer and suite of files that manage the certificates and install packages. Email alerts are sent using attachments to Postfix. Crontab performs hourly reruns. The hosted files are accessible by clients on `Z:\<NAS HOST>\<PARENT DIRECTORY>`.
 Local hosts are first bootstrapped, which executes a series of tasks: creating the automated scheduled tasks in the Task Scheduler, checking for the NAS device availability then syncing the data from the device, instantiating script tamper protections, desired Windows OS Settings, and performing initial package and certificate installs. The local enforcer script runs based on pre-defined parameters including every logon. Local install persists to the `C:\Tools` directory except for Winget-based packages. Certificates are placed within the NAS\` `trusted-root-certificates` folder. Installations and certificates may therefore be managed centrally and enforced including uninstalls and certificated renewal and revocations, without requiring a PKI setup.
 
-This is where automation and enforcement scripts are synchronized to Windows client hosts within Damo.net.
-
-### How the process works
-Once bootstrapped, the process will first create and copy itself to `C:\scripts\batch`, then kick off the file sync between the NAS enforcement folder and the `C:\scripts` folder locally.
-Once syncing completes, all the required files, scripts, and scheduled tasks will be created and then executed.
-
-The 'First Run Enforcement Checks' scheduled task re-runs the above process from within the scripts folder every startup, and then every 2 hours indefinitely.
-Any changes made to the scripts directory will automatically be copied to the clients, enabling a method for centrally managing Windows hosts.
-All scheduled tasks are located within the newly created `Damo.net` folder. (within the Task Scheduler program)
-
 An enforcement cron job runs on the NAS which performs the management of certificates, checking of valid packages for install management options, and certificate renewal and revocation for certificate management files.
-An email alert is sent when issues are discovered with any of the install and/or certificate management files.
+An email alert is sent when issues are discovered with any of the install and/or certificate management files including certificate revocation notices.
 
 ### Target Host Pre-reqs
 1. [Winget](https://learn.microsoft.com/en-us/windows/package-manager/winget/) and [OpenSSL](https://winstall.app/apps/ShiningLight.OpenSSL) are installed

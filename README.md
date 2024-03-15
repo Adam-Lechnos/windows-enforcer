@@ -84,7 +84,8 @@ Each file may be set to ON by updating the appended name accordingly.
 
 #### Feature Flag file details - file names below are case/spelling sensitive:
 * `certificate-refresh-renameMe-ON.txt` --> This file is managed by the program and should not be modified; used to track which certs are slated for refresh based on their expiry. certs expiring within 15 days are added to this list. new certs should be replaced using the same values and cert file name. 
-* `certificate-refresh_FORCE_renameMe-OFF.txt` --> Rename with OFF set to ON and add hostnames for hosts that require a full cert refresh. only used for hosts that have been offline long enough to miss certificate replacements. set back to OFF when not in use. 
+* `certificate-refresh_FORCE_renameMe-OFF.txt` --> Rename with OFF set to ON and add hostnames for hosts that require a full cert refresh. only used for hosts that have been offline long enough to miss certificate replacements. set back to OFF when not in use.
+* `windows_os-malware-privacy_renameMe-ON.txt` --> A future feature flag, ensuring all privacy and malware-based Windows OS settings are hardened. Based on Chris Wellons' hardening. The code was used from [0mid](https://gitlab.com/0mid/dotfiles/-/blob/master/lessmal.bat?ref_type=heads). Default: `ON`
 
 ### Logging
 Scripts executed manually will output logging data to the logged-in user's temp directory --> `%temp%\damo-net\logs` (`C:\Users\<user>\AppData\Local\Temp\damo_net`)

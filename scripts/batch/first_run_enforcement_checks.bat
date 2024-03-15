@@ -144,8 +144,13 @@ if %errorlevel% NEQ 0 (
 echo **Windows OS Settings Enforcement** >> %LOGFILE%
 
 :: File Explorer - Ensure file extensions are viewable
-reg add HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced /v HideFileExt /t REG_DWORD /d 0 /f
-if %errorlevel% NEQ 0 (echo "File Explorer - enable viewable extensions failed" >> %LOGFILE%) else (echo "File Explorer - enable viewable extensions succeeded" >> %LOGFILE%)
+
+reg query HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced /v HideFileExt | findstr "0x0"
+if %errorlevel% NEQ 0 (
+	echo "File Explorer - enable viewable extensions reg key/value not found -adding"
+	reg add HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced /v HideFileExt /t REG_DWORD /d 0 /f
+	if %errorlevel% NEQ 0 (echo "File Explorer - enable viewable extensions failed" >> %LOGFILE%) else (echo "File Explorer - enable viewable extensions succeeded" >> %LOGFILE%)
+)
 
 :: Install Tools
 echo **Install Process** >> %LOGFILE%

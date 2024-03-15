@@ -75,9 +75,6 @@ Each client runtime will ensure the following OS Settings and Windows Filesystem
 * Lock down the directory, `C:\Scripts` with only read and list access by non-Admins within the `Users` group.
 * Scheduled tasks are only viewable/modifiable by Admins.
 
-### Windows OS Security Changes - Mandatory
-1. File extensions will be set to viewable by all users. This ensures users are aware of the file type being executed. For example, a file may masquerade as a PDF when it's an executable (EXE).
-
 ### Feature Flags
 The First Run Enforcement Script contains a feature flag folder, editable on the NAS enforcement folder, `\scripts\batch\featureFlags-first-run_enforcement_checks`
 Each file may be set to ON by updating the appended name accordingly.

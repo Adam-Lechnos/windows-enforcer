@@ -11,7 +11,7 @@ if not exist C:\scripts\batch\install_removal (mkdir C:\scripts\batch\install_re
 :: Check dependencies
 winget -v
 if not errorlevel 0 (
-	echo "Dependency Check - Winget not installed. Install 'App Installer' from the Microsoft Store for winget install feature" >> %LOGFILE%
+	echo "*** Dependency Check - Winget not installed. Install 'App Installer' from the Microsoft Store for winget install feature ***" >> %LOGFILE%
 	exit
 )
 
@@ -61,7 +61,7 @@ if not exist Z:\ (
 	if exist Z:\damo-net\automation\enforcement\scripts\batch\first_run_enforcement_checks.bat (
 		goto resync
 	) else (
-		*** echo Z drive mapping is incorrect. Un-map existing Z drive, then try again *** >> %LOGFILE%
+		*** echo "*** Z drive mapping is incorrect. Un-map existing Z drive, then try again ***" >> %LOGFILE%
 	)
 )
 

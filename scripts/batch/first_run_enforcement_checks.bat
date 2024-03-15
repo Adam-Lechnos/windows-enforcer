@@ -8,6 +8,13 @@ set LOGFILE=%temp%\damo_net\logs\first-run-enforcement-%TIMESTAMP%.log
 if not exist %temp%\damo_net\logs\ (mkdir %temp%\damo_net\logs\)
 if not exist C:\scripts\batch\install_removal (mkdir C:\scripts\batch\install_removal)
 
+:: Check dependencies
+winget -v
+if not errorlevel 0 (
+	echo "Dependency Check - Winget not installed. Install 'App Installer' from the Microsoft Store for winget install feature" >> %LOGFILE%
+	exit
+)
+
 
 :: Main entry point for running enforcement and syncing data for Damo.net admin settings. Never rename or delete this file.
 
@@ -155,12 +162,6 @@ echo **Install Process** >> %LOGFILE%
 
 :: winget installs
 echo **winget installs** >> %LOGFILE%
-
-winget -v
-if not errorlevel 0 (
-	echo "install 'App Installer' from the Microsoft Store for winget install feature" >> %LOGFILE%
-	exit
-)
 
 for /F "tokens=*" %%A in (C:\scripts\batch\winget-installs.txt) do (
 	winget list %%A >> %LOGFILE%

@@ -47,21 +47,21 @@ if not exist C:\scripts\batch\first_run_enforcement_checks.bat (
 echo running robo copy from central NAS enforcement folder to ensure latest files are being used >> %LOGFILE%
 :: check if drive is mapped, if not, ping NAS, if fails, skip, otherwise, re-map
 if not exist Z:\ (
-	echo mapped drive not found, pinging NAS >> %LOGFILE%
+	echo "*** mapped drive not found, pinging NAS ***" >> %LOGFILE%
 	:: use IP of NAS device
 	ping -n 1 10.10.0.1 | find "TTL"
 	if not errorlevel 1 (
 		echo re-mapping NAS, ping responded >> %LOGFILE%
 		goto resync
 	) else (
-		echo cannot ping NAS, either down or off the network >> %LOGFILE%
-		echo will attempt remaining enforcement tasks, which will fail if at least one sync has not occured >> %LOGFILE%
+		echo "*** cannot ping NAS, either down or off the network ***" >> %LOGFILE%
+		echo "*** will attempt remaining enforcement tasks, which will fail if at least one sync has not occured ***" >> %LOGFILE%
 	) 
 ) else (
 	if exist Z:\damo-net\automation\enforcement\scripts\batch\first_run_enforcement_checks.bat (
 		goto resync
 	) else (
-		*** echo "*** Z drive mapping is incorrect. Un-map existing Z drive, then try again ***" >> %LOGFILE%
+		echo "*** Z drive mapping is incorrect. Un-map existing Z drive, then try again ***" >> %LOGFILE%
 	)
 )
 

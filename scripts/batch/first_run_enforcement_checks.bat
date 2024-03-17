@@ -6,7 +6,7 @@ set TIMESTAMP=%TIMESTAMP: =%
 set LOGFILE=%temp%\damo_net\logs\first-run-enforcement-%TIMESTAMP%.log
 
 if not exist %temp%\damo_net\logs\ (mkdir %temp%\damo_net\logs\)
-if not exist C:\scripts\batch\install_removal (mkdir C:\scripts\batch\install_removal)
+if not exist C:\damo_net\windows_enforcer\install_removal (mkdir C:\damo_net\windows_enforcer\install_removal)
 
 :: Check dependencies
 winget -v
@@ -37,10 +37,10 @@ exit
 :start
 echo ** DAMO.NET workgroup detected, continuing... ** >> %LOGFILE%
 :: copy itself if file does not exist in designated location
-if not exist C:\scripts\batch\first_run_enforcement_checks.bat (
+if not exist C:\damo_net\windows_enforcer\first_run_enforcement_checks.bat (
 	echo first run enforcement script does not exist, copying and executing remaining enforcement checks >> %LOGFILE%
-	mkdir C:\scripts\batch
-	copy "%~f0" C:\scripts\batch\first_run_enforcement_checks.bat
+	mkdir C:\damo_net\windows_enforcer
+	copy "%~f0" C:\damo_net\windows_enforcer\first_run_enforcement_checks.bat
 )
 
 :: peform file sync from designated NAS folder attempting to map the correct drive letter if it does not exist
@@ -88,21 +88,21 @@ icacls c:\scripts\ /grant "Users":(R) /q /c /t >> %LOGFILE%
 @REM reg add "HKEY_LOCAL_MACHINE\Software\Policies\Microsoft\Windows\Task Scheduler5.0" /v "Task Deletion" /t REG_DWORD /d 0 /f
 
 :: remove all certs before installing for hosts opted into force cert refresh list with flag set to ON
-if exist C:\scripts\batch\featureFlags-first-run_enforcement_checks\certificate-refresh_FORCE_renameMe-ON.txt (
+if exist C:\damo_net\windows_enforcer\featureFlags-first-run_enforcement_checks\certificate-refresh_FORCE_renameMe-ON.txt (
 	FOR /F "tokens=* USEBACKQ" %%F IN (`hostname`) DO (
     SET hostname=%%F
-	  findstr /r /s /i /m /c:"\<!hostname!\>" "C:\scripts\batch\featureFlags-first-run_enforcement_checks\certificate-refresh_FORCE_renameMe-ON.txt"
+	  findstr /r /s /i /m /c:"\<!hostname!\>" "C:\damo_net\windows_enforcer\featureFlags-first-run_enforcement_checks\certificate-refresh_FORCE_renameMe-ON.txt"
 	  if not errorlevel 1 (
 		  echo 'feature flag for force cert refresh active with local host opted in. removing trusted root certificates listed in force list before installing' >> %LOGFILE%
-		  for /F "tokens=*" %%A in (C:\scripts\batch\featureFlags-first-run_enforcement_checks\certificate-refresh_FORCE_LIST.txt) do certutil.exe -delstore root %%A && echo ** Removed Cert Name: %%A **  >> %LOGFILE%
+		  for /F "tokens=*" %%A in (C:\damo_net\windows_enforcer\featureFlags-first-run_enforcement_checks\certificate-refresh_FORCE_LIST.txt) do certutil.exe -delstore root %%A && echo ** Removed Cert Name: %%A **  >> %LOGFILE%
 	  )  
   )
 )
 
 :: remove certs within revokation list
-if exist C:\scripts\batch\cert-removal\cert-revoked.txt (
+if exist C:\damo_net\windows_enforcer\cert-removal\cert-revoked.txt (
 	echo "applying cert revocation for certs specified in cert-revoked.txt"  >> %LOGFILE%
-	for /F "tokens=*" %%A in (C:\scripts\batch\cert-removal\cert-revoked.txt) do (
+	for /F "tokens=*" %%A in (C:\damo_net\windows_enforcer\cert-removal\cert-revoked.txt) do (
 		certutil.exe -verifystore root %%A
 		if errorlevel 0 (
 			certutil.exe -delstore root %%A && echo ** Cert Name: %%A **  >> %LOGFILE%
@@ -111,9 +111,9 @@ if exist C:\scripts\batch\cert-removal\cert-revoked.txt (
 )
 
 :: remove before installing certs if feature flag active - via present file name and its list of 'Issued To' cert names (usefull for replacing expired certs)
-if exist C:\scripts\batch\featureFlags-first-run_enforcement_checks\certificate-refresh_renameMe-ON.txt (
+if exist C:\damo_net\windows_enforcer\featureFlags-first-run_enforcement_checks\certificate-refresh_renameMe-ON.txt (
 	echo "always active feature flag - removing trusted root certificates listed in file before installing"  >> %LOGFILE%
-	for /F "tokens=*" %%A in (C:\scripts\batch\featureFlags-first-run_enforcement_checks\certificate-refresh_renameMe-ON.txt) do certutil.exe -delstore root %%A && echo ** Cert Name: %%A **  >> %LOGFILE%
+	for /F "tokens=*" %%A in (C:\damo_net\windows_enforcer\featureFlags-first-run_enforcement_checks\certificate-refresh_renameMe-ON.txt) do certutil.exe -delstore root %%A && echo ** Cert Name: %%A **  >> %LOGFILE%
 )
 
 :: install trusted root certificates if not present on local host
@@ -135,7 +135,7 @@ schtasks /query /TN "Damo.net\First Run Enforcement Checks" >NUL 2>&1
 if %errorlevel% NEQ 0 (
 	echo scheduled task does not exist, re-creating - first run enforcement checks >> %LOGFILE%
         :: create then start after delay while continuing this script
-	schtasks /Create /XML "C:\scripts\batch\First Run Enforcement Checks.xml" /TN "Damo.net\First Run Enforcement Checks" >> %LOGFILE%
+	schtasks /Create /XML "C:\damo_net\windows_enforcer\First Run Enforcement Checks.xml" /TN "Damo.net\First Run Enforcement Checks" >> %LOGFILE%
 	echo first run enforcement scheduled task will start in 10 seconds to intialize hourly auto-runs >> %LOGFILE%
 	start "" /b cmd /c "timeout /nobreak 10 >nul & start schtasks /run /TN "Damo.net\First Run Enforcement Checks" >> %LOGFILE%
 )
@@ -163,7 +163,7 @@ echo **Install Process** >> %LOGFILE%
 :: winget installs
 echo **winget installs** >> %LOGFILE%
 
-for /F "tokens=*" %%A in (C:\scripts\batch\winget-installs.txt) do (
+for /F "tokens=*" %%A in (C:\damo_net\windows_enforcer\winget-installs.txt) do (
 	winget list %%A >> %LOGFILE%
 	if not errorlevel 0 (
 	winget install %%A -h --accept-package-agreements --accept-source-agreements --no-upgrade >> %LOGFILE% && echo installed %%A >> %LOGFILE%
@@ -186,7 +186,7 @@ echo **github raw installs** >> %LOGFILE%
 @echo off
 setlocal enabledelayedexpansion
 
-for /F "tokens=*" %%A in (C:\scripts\batch\github-raw-installs.txt) do (
+for /F "tokens=*" %%A in (C:\damo_net\windows_enforcer\github-raw-installs.txt) do (
   set fullpath=%%A
   for %%a in ("!fullpath!/.") do set lastPart=%%~nxa
 
@@ -203,7 +203,7 @@ for /F "tokens=*" %%A in (C:\scripts\batch\github-raw-installs.txt) do (
 :: GitHub Release Installes
 echo **github release installs** >> %LOGFILE%
 
-for /F "tokens=*" %%A in (C:\scripts\batch\github-release-install.txt) do (
+for /F "tokens=*" %%A in (C:\damo_net\windows_enforcer\github-release-install.txt) do (
 set ghrelease=%%A
 
 for /f "tokens=2 delims=/" %%a in ("!ghrelease!") do (
@@ -220,44 +220,44 @@ for /f "tokens=2 delims=/" %%a in ("!ghrelease!") do (
 
 :: Remove installs which are no longer listed - Excludes winget installs
 echo created list of what is installed >> %LOGFILE%
-dir /a:d /b C:\Tools\ > C:\scripts\batch\install-removal\installed.txt
+dir /a:d /b C:\Tools\ > C:\damo_net\windows_enforcer\install-removal\installed.txt
 
 echo created install_desired with list of what should be installed >> %LOGFILE%
-if exist C:\scripts\batch\install-removal\install_desired.txt (
-del /Q C:\scripts\batch\install-removal\install_desired.txt
+if exist C:\damo_net\windows_enforcer\install-removal\install_desired.txt (
+del /Q C:\damo_net\windows_enforcer\install-removal\install_desired.txt
 )
-for /F "tokens=*" %%A in (C:\scripts\batch\github-raw-installs.txt) do (
+for /F "tokens=*" %%A in (C:\damo_net\windows_enforcer\github-raw-installs.txt) do (
   set fullpath=%%A
   for %%a in ("!fullpath!/.") do set lastPart=%%~nxa
   for /f "tokens=1 delims=." %%a in ("!lastPart!") do (
    set dirname=%%a
-   echo !dirname! >> C:\scripts\batch\install-removal\install_desired.txt
+   echo !dirname! >> C:\damo_net\windows_enforcer\install-removal\install_desired.txt
   ) 
 )
 
-for /F "tokens=*" %%A in (C:\scripts\batch\github-release-install.txt) do (
+for /F "tokens=*" %%A in (C:\damo_net\windows_enforcer\github-release-install.txt) do (
 set ghrelease=%%A
 for /f "tokens=2 delims=/" %%a in ("!ghrelease!") do (
   set dirname2=%%a
-  echo !dirname2! >> C:\scripts\batch\install-removal\install_desired.txt
+  echo !dirname2! >> C:\damo_net\windows_enforcer\install-removal\install_desired.txt
  )
 )
 
 echo reconciled the list of installed against what should be installed outputting only those that should be removed >> %LOGFILE%
-if exist C:\scripts\batch\install-removal\install_remove.txt (
-  del /Q C:\scripts\batch\install-removal\install_remove.txt
+if exist C:\damo_net\windows_enforcer\install-removal\install_remove.txt (
+  del /Q C:\damo_net\windows_enforcer\install-removal\install_remove.txt
 )
 
-for /F "tokens=*" %%A in (C:\scripts\batch\install-removal\installed.txt) do (
+for /F "tokens=*" %%A in (C:\damo_net\windows_enforcer\install-removal\installed.txt) do (
   set installed=%%A
-  findstr "\<!installed!\>" "C:\scripts\batch\install-removal\install_desired.txt"
+  findstr "\<!installed!\>" "C:\damo_net\windows_enforcer\install-removal\install_desired.txt"
   if errorlevel 1 (
-    echo !installed! >> C:\scripts\batch\install-removal\install_remove.txt
+    echo !installed! >> C:\damo_net\windows_enforcer\install-removal\install_remove.txt
   )
 )
 
-if exist C:\scripts\batch\install-removal\install_remove.txt (
-  for /F "tokens=*" %%A in (C:\scripts\batch\install-removal\install_remove.txt) do (
+if exist C:\damo_net\windows_enforcer\install-removal\install_remove.txt (
+  for /F "tokens=*" %%A in (C:\damo_net\windows_enforcer\install-removal\install_remove.txt) do (
     set remove=%%A
     rmdir /s/q C:\Tools\!remove!
 	echo removing !remove! >> %LOGFILE%
@@ -266,9 +266,9 @@ if exist C:\scripts\batch\install-removal\install_remove.txt (
 
 :: Remove winget installs listed within the winget-uninstalls input file
 echo **processing winget uninstalls** >> %LOGFILE%
-for /F "tokens=*" %%A in (C:\scripts\batch\winget-uninstalls.txt) do (
+for /F "tokens=*" %%A in (C:\damo_net\windows_enforcer\winget-uninstalls.txt) do (
 	set wgremove=%%A
-	findstr /r /s /i /m /c:"\<!wgremove!\>" "C:\scripts\batch\winget-installs.txt"
+	findstr /r /s /i /m /c:"\<!wgremove!\>" "C:\damo_net\windows_enforcer\winget-installs.txt"
 	if not errorlevel 1 (
 		echo "winget uninstall conflict for '!wgremove!' - present in install input as well, skipping" >> %LOGFILE%
 	) else (

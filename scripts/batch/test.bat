@@ -96,14 +96,23 @@ setlocal enabledelayedexpansion
 @REM   echo ** Removed Cert Name: %%a **
 @REM )
 
-if exist C:\test\scripts\batch\featureFlags-first-run_enforcement_checks\certificate-refresh_FORCE_renameMe-ON.txt (
-	FOR /F "tokens=* USEBACKQ" %%F IN (`hostname`) DO (
-    SET hostname=%%F
-	  findstr /r /s /i /m /c:"\<%hostname%\>" "C:\test\scripts\batch\featureFlags-first-run_enforcement_checks\certificate-refresh_FORCE_renameMe-ON.txt"
-	  if not errorlevel 1 (
-		  echo feature flag for force cert refresh active with local host opted in removing trusted root certificates listed in force list before installing'  >> %LOGFILE%
-		  echo REMOVE CERT TEST
-		  for /F "tokens=*" %%A in (C:\scripts\batch\featureFlags-first-run_enforcement_checks\certificate-refresh_FORCE_LIST.txt) do certutil.exe -delstore root %%A && echo ** Cert Name: %%A **  >> %LOGFILE%
-	  )  
-  )
+@REM if exist C:\test\scripts\batch\featureFlags-first-run_enforcement_checks\certificate-refresh_FORCE_renameMe-ON.txt (
+@REM 	FOR /F "tokens=* USEBACKQ" %%F IN (`hostname`) DO (
+@REM     SET hostname=%%F
+@REM 	  findstr /r /s /i /m /c:"\<%hostname%\>" "C:\test\scripts\batch\featureFlags-first-run_enforcement_checks\certificate-refresh_FORCE_renameMe-ON.txt"
+@REM 	  if not errorlevel 1 (
+@REM 		  echo feature flag for force cert refresh active with local host opted in removing trusted root certificates listed in force list before installing'  >> %LOGFILE%
+@REM 		  echo REMOVE CERT TEST
+@REM 		  for /F "tokens=*" %%A in (C:\scripts\batch\featureFlags-first-run_enforcement_checks\certificate-refresh_FORCE_LIST.txt) do certutil.exe -delstore root %%A && echo ** Cert Name: %%A **  >> %LOGFILE%
+@REM 	  )  
+@REM   )
+@REM )
+
+
+cd C:\scripts
+for /r %%G in (*) DO (
+
+	@REM echo "%%G"
+	icacls "%%G"
+	echo %errorlevel%
 )

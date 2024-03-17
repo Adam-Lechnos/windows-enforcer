@@ -22,11 +22,11 @@ An email alert is sent when issues are discovered with any of the install and/or
 
 ### Installation steps for all new clients
 1. Ensure the client is connected to the workgroup, DAMO.NET
-2. Copy the file `script\batch\first_run_enforcement_checks.bat`, locally to the the 'C' drive from the NAS server, ensuring the client is on an `DAMO.NET` network.
+2. Copy the file `damo_net\windows_enforcer\batch\first_run_enforcement_checks.bat`, locally to the the 'C' drive from the NAS server, ensuring the client is on an `DAMO.NET` network.
 3. Ensure the NAS is mapped as drive 'Z', if not, ensure you can ping `10.10.0.10`, the NAS server. (Note: If any other drive is mapped to 'Z', the script will fail)
 4. Start an elevated command prompt, then execute the locally copied file.
-5. Check the `C:\scripts` folder, ensuring the files `C:\scripts\batch\first_run_enforcement_checks.bat` and `First Run Enforcement Checks.xml` exist.
-6. Delete the manually executed `first_run_enforcement_checks.bat` file (which should *not* be the `C:\script\batch\first_run_enforcement_checks.bat` copy).
+5. Check the `C:\damo_net\windows_enforcer\batch` folder, ensuring the files `C:\damo_net\windows_enforcer\batch\first_run_enforcement_checks.bat` and `First Run Enforcement Checks.xml` exist.
+6. Delete the manually executed `first_run_enforcement_checks.bat` file (which should *not* be the `C:\damo_net\windows_enforcer\batch\first_run_enforcement_checks.bat` copy).
 
 ### NAS Installation
 1. Place a copy of the entire enforcement-script-windows folder somewhere within the directory structure of the NAS and create a Shared Folder with read-only permissions.
@@ -45,7 +45,7 @@ An email alert is sent when issues are discovered with any of the install and/or
       		echo will attempt remaining enforcement tasks, which will fail if at least one sync has not occurred >> %LOGFILE%
       	) 
       ) else (
-      	if exist Z:\damo-net\automation\enforcement\scripts\batch\first_run_enforcement_checks.bat (
+      	if exist Z:\damo-net\windows_enforcer\batch\first_run_enforcement_checks.bat (
       		goto resync
       	) else (
       		*** echo Z drive mapping is incorrect. Un-map existing Z drive, then try again *** >> %LOGFILE%
@@ -67,16 +67,16 @@ An email alert is sent when issues are discovered with any of the install and/or
 ### Updating files
 From the NAS drive's enforcement folder, make changes to any file and it will sync and either execute or install.
 
-**IMPORTANT** Never change the name of the file, `script\batch\first_run_enforcement_checks.bat`, either within the NAS directory or locally on any client. If the 'First Run Enforcement Checks' scheduled task is ever deleted or modified, the above steps should be followed.
+**IMPORTANT** Never change the name of the file, `C:\damo_net\windows_enforcer\batch\first_run_enforcement_checks.bat`, either within the NAS directory or locally on any client. If the 'First Run Enforcement Checks' scheduled task is ever deleted or modified, the above steps should be followed.
 
 ### Tamper Protection
 Each client runtime will ensure the following OS Settings and Windows Filesystem Permissions
 * Enable Audit logging for logon and logoff events -both success and failures
-* Lock down the directory, `C:\Scripts` with only read and list access by non-Admins within the `Users` group.
+* Lock down the directory, `C:\damo_net` with only read and list access by non-Admins within the `Users` group.
 * Scheduled tasks are only viewable/modifiable by Admins.
 
 ### Feature Flags
-The First Run Enforcement Script contains a feature flag folder, editable on the NAS enforcement folder, `\scripts\batch\featureFlags-first-run_enforcement_checks`
+The First Run Enforcement Script contains a feature flag folder, editable on the NAS enforcement folder, `\windows_enforcer\batch\featureFlags-first-run_enforcement_checks`
 Each file may be set to ON by updating the appended name accordingly.
 
 #### Feature Flag file details - file names below are case/spelling sensitive:
@@ -121,6 +121,9 @@ Trusted Root Certificates may be added for home network devices that contain a w
 The following Windows 10/11 Operating System settings are enforced. Explorer.exe will not be rebooted in favor of an uninterrupted end-user experience. Instead, settings will take effect on the next reboot.
 * Audit logging for `logon` and `logoff` events
 * Windows File Explorer - Enable viewable file extensions
+
+### File Replication
+A files placed within the directory on the NAS enforcement side, ``C:\damo_net\`, will be replicated to all bootstrapped hosts. By default, a `scripts` folder is created and enforced to ensure a predicable folder structure across all hosts for future automation and the enforcement of local scripts within the network.
 
 ### Enforcement Checker
 Enforcement checker runs via cron to check for proper file and folder hygiene. It ensure the requisite certificate and installer management files are present and formatted correctly. Email alerts are sent out if any issues are detected including certain informational and warning types.

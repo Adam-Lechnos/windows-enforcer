@@ -87,7 +87,7 @@ if not exist Z:\ (
 :resync
 echo ** syncing files with NAS enforcement folder ** >> %LOGFILE%
 :: sync scripts
-robocopy C:\test\ C:\damo_net\ /MIR /XD .git /XF bootstrap_success.txt >> %LOGFILE%
+robocopy C:\test\ C:\damo_net\ /MIR /XD .git /XF bootstrap_success.txt last-runs-check.sh >> %LOGFILE%
 :: sync trusted root certificates
 robocopy C:\test\trusted-root-certificates %temp%\damo_net\trusted-root-certificates /MIR  >> %LOGFILE%
 
@@ -326,6 +326,7 @@ if not exist C:\damo_net\windows_enforcer\batch\bootstrap_success.txt  (
 	icacls C:\damo_net\windows_enforcer\batch\bootstrap_success.txt /remove:g "Users" /q /c >> %LOGFILE%
 	icacls C:\damo_net\windows_enforcer\batch\bootstrap_success.txt /setowner "SYSTEM" /q /c >> %LOGFILE%
 	echo **bootstrap file and permissions created** >> %LOGFILE%
+	echo BOOTSTRAP SUCCESSFUL
 	) else (
 		echo **bootstrap file and permissions already exists** >> %LOGFILE%
 	)
@@ -335,6 +336,13 @@ icacls C:\damo_net\windows_enforcer\batch\last_run.txt /reset /q /c >> %LOGFILE%
 icacls C:\damo_net\windows_enforcer\batch\last_run.txt /inheritance:d >> %LOGFILE%
 icacls C:\damo_net\windows_enforcer\batch\last_run.txt /grant "Users":(R) /q /c >> %LOGFILE%
 echo **last run file with timestamp created** >> %LOGFILE%
+
+if exist C:\damo_net_last-runs (
+	echo %TIMESTAMP% > C:\damo_net_last-runs\%COMPUTERNAME%.txt
+	echo "sent last run data to 'damo_net_last-runs' folder on NAS" >> %LOGFILE%
+) else (
+	echo "could not send last run data to 'damo_net_last-runs' folder on NAS as folder was not accessible. Last run did complete however. Check local 'last_run.txt file' to confirm timestamp" >> %LOGFILE%
+)
 
 @REM IF "%user%" == "%usertest%" (
 @REM 	echo "this is a test" > C:\damo_net\windows_enforcer\batch\testing.txt

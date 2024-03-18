@@ -76,6 +76,8 @@ An email alert is sent when issues are discovered with any of the install and/or
       ping -n 1 10.10.0.1 | find "TTL" && ping -n 1 -a 10.10.0.1 | find "RT-AC5300-C300" && ipconfig | find "DAMO.NET"
       set neterror[0]=%errorlevel%
       ```
+1. Create a folder on the NAS\` parent `Z` drive, `damo_net_last-runs`, with read, write, and delete access for all users. This is where the `enforce-checker.sh` script can iterate and parse each text file created for every run by each local host to ensure each client completed a `first_run_enforcement_check` within the last 28 days from the day the enforcement checker is executed.
+
 #### Permissions
 * Read access should be the default permission for the parent and subdirectories of the Shared Folder to allow for local Windows [robocopy](https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/robocopy) to copy the data.
 * Write access should only be granted to admins designated to determine host enforcement.
@@ -106,6 +108,8 @@ Scripts executed via task scheduler, even if executed manually, will output logg
 A new log is generated with the execution's point-in-time date and time stamp appended.
 
 If the client is off the network, the script will attempt to execute enforcement tasks, which are expected to fail if at least one sync has not occurred or if the files were deleted within the local scripts folder. The next successful re-sync will re-create any missing files.
+
+For every client run, `last_run.txt` is overwritten with the timestamp of the most recent execution. The file is located in `windows_enforcer\batch\last_run.tx`. This file is created on each local host in addition to a remote copy with the filename being the hostname. These remote files are used be [Enforcement Checker](#enforcement-checker) to alert on last runs which did not occur for at least 28 days.
 
 ### Managing Installs
 Downloads packages to the `C:\Tools` folder, except for those that are obtained via the Winget package manager, in which case are installed according to the Winget process. Note, that only the data is downloaded to the `C:\Tools` folder. Subsequent installs must occur manually post the data retrieval if required. Use this feature for pulling down simple packages. Subsequent download attempts are ignored for each install in which its corresponding directory gets created. For Winget, the script first checks the Winget list command for existing installs. Upgrades are not attempted once the installation is completed. Use `Winget update --all` instead.
@@ -157,3 +161,4 @@ Email alerts will be generated with an attached log file if any of the following
 *  Any certs expiring within 45 days or less
   * Will continue to alert until replaced with a non-expiring cert. All cert options should be identical, such as Subject, CN, and SAN.
   * Once the expiry is 14 days or less automatic replacements will occur. These expiring certs will be removed and then added during the 14-day window.
+* Last runs for any host is not reported back for more than 28 days. Last runs may be monitored by checking the parent NAS drive `Z`, checking the filename of the hostname corresponding to the last run check. Simply open the file to check the last date and time of the most recent enforcement run.

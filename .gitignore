@@ -11,3 +11,6 @@
 **/certificate-present-list*
 **/cert-revoked*
 **/enforce-issues.txt
+**/last_run_enforce-checker.txt
+**/last_run.txt
+**/test.bat

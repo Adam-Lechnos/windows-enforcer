@@ -91,6 +91,7 @@ sed -i -e 's/\r$//' ./github-release-install.txt 2>&1>/dev/null
 sed -i -e 's/\r$//' ./github-raw-installs.txt 2>&1>/dev/null
 sed -i -e 's/\r$//' ./cert-removal/cert-revoked.txt 2>&1>/dev/null
 sed -i -e 's/\r$//' ./cert-removal/certificate-present-list.txt 2>&1>/dev/null
+sed -i -e 's/\r$//' ../../last-runs-check.sh 2>&1>/dev/null
 
 ## check winget list
 listwinget="./winget-installs.txt"
@@ -227,7 +228,7 @@ then
 
 else
 
-  for certfile in $rootcertdir/*
+  for certfile in $rootcertdir/*.crt
   do
     
     ## create list of certs to check for removal on current run
@@ -309,6 +310,34 @@ fi
 ## make backup copies of cert removal management lists
 cp ./cert-removal/cert-revoked.txt ./cert-removal/cert-revoked-backup.txt
 cp ./cert-removal/certificate-present-list.txt ./cert-removal/certificate-present-list-backup.txt
+
+## perform client last run checks, ensuring that each client has performed a successful run in the last 28 days.
+if [ ! -d "../../../damo_net_last-runs" ]
+then
+  mkdir "../../../damo_net_last-runs"
+  echo "last runs issue = 'damo_net_last-runs' folder not found and re-created" >> $outputlist
+else
+  for filename in ../../../damo_net_last-runs/*.txt
+  do
+    sed -i -e 's/\r$//' $filename
+    filedate=$(cat $filename | cut -d- -f2)
+    currentdate=$(date | cut -d' ' -f3)
+    subtractdays=$(($currentdate-$filedate))
+    basefile=$filename
+    host=$(basename $basefile | tr -d .txt)
+    nslookup $host | grep -i 'no answer' >/dev/null
+    rc=$?
+    if (($rc == 0))
+    then
+    echo "nslookup failed = host is not in DNS. If this is expected then remove the hostname file from 'damo_net_last-runs or it will eventually report 'last runs' errors as well at' - $host" >> $outputlist
+    fi
+
+    if [ $subtractdays -ge 28 ]
+    then
+      echo "last runs = host run has not occured in at least the last 28 days - $host" >> $outputlist
+    fi
+  done
+fi
 
 ## if enforce warnings or issues exist, send as email attachment
 if [ -f  $outputlist ]

@@ -1,6 +1,16 @@
 @echo off
 setlocal enabledelayedexpansion
 
+set user="%username%"
+set usertest="%COMPUTERNAME%$"
+
+:: prevent manual run post bootstrapping. Only system account may run the process when the bootstrap file exist.
+if exist "C:\damo_net\windows_enforcer\batch\bootstrap_success.txt" if not "%user%" == "%usertest%" (
+	echo "This script may not be executed manually after bootstrapping, exiting in 20 seconds."
+	timeout /t 20
+	exit
+	)
+
 set TIMESTAMP=%DATE:/=-%_%TIME::=-%
 set TIMESTAMP=%TIMESTAMP: =%
 set LOGFILE=%temp%\damo_net\logs\first-run-enforcement-%TIMESTAMP%.log
@@ -77,13 +87,13 @@ if not exist Z:\ (
 :resync
 echo ** syncing files with NAS enforcement folder ** >> %LOGFILE%
 :: sync scripts
-robocopy C:\test\ C:\damo_net\ /MIR >> %LOGFILE%
+robocopy C:\test\ C:\damo_net\ /MIR /XD .git /XF bootstrap_success.txt >> %LOGFILE%
 :: sync trusted root certificates
 robocopy C:\test\trusted-root-certificates %temp%\damo_net\trusted-root-certificates /MIR  >> %LOGFILE%
 
 echo "*tamper protection*" >> %LOGFILE%
 :: lock down local C:\scripts directory and all child objects
-echo "**locking down C:\Scripts directory**" >> %LOGFILE%
+echo "**locking down C:\damo_net\ directory**" >> %LOGFILE%
 icacls C:\damo_net\ /reset /q /c /t >> %LOGFILE%
 icacls C:\damo_net\ /inheritance:d >> %LOGFILE%
 icacls C:\damo_net\ /setowner "Administrators" /q /c /t >> %LOGFILE%
@@ -93,7 +103,19 @@ icacls C:\damo_net\ /grant "Users":(R) /q /c /t >> %LOGFILE%
 :: remove delete permissions for this script from the Administrators group
 icacls C:\damo_net\windows_enforcer\batch\first_run_enforcement_checks.bat /inheritance:d >> %LOGFILE%
 icacls C:\damo_net\windows_enforcer\batch\first_run_enforcement_checks.bat /remove:g "Administrators" /q /c >> %LOGFILE%
-icacls C:\damo_net\windows_enforcer\batch\first_run_enforcement_checks.bat /grant "Administrators":(RX) /q /c >> %LOGFILE%
+icacls C:\damo_net\windows_enforcer\batch\first_run_enforcement_checks.bat /remove:g "Users" /q /c >> %LOGFILE%
+icacls C:\damo_net\windows_enforcer\batch\first_run_enforcement_checks.bat /setowner "SYSTEM" /q /c >> %LOGFILE%
+:: ensure adminn access to the scripts folder
+icacls C:\damo_net\scripts\ /reset /q /c /t >> %LOGFILE%
+icacls C:\damo_net\scripts\ /inheritance:d >> %LOGFILE%
+icacls C:\damo_net\scripts\ /setowner "Administrators" /q /c /t >> %LOGFILE%
+icacls C:\damo_net\scripts\ /grant "Administrators":(F) /q /c /t >> %LOGFILE%
+icacls C:\damo_net\scripts\ /remove:g "Users" /q /c /t >> %LOGFILE%
+icacls C:\damo_net\scripts\ /grant "Users":(R) /q /c /t >> %LOGFILE%
+icacls C:\damo_net\scripts\ /remove:g "Authenticated Users" /q /c /t >> %LOGFILE%
+icacls C:\damo_net\scripts\ /grant "Authenticated Users":(R) /q /c /t >> %LOGFILE%
+:: break-glass enable admin permissions to take control of the locked down file
+@REM icacls C:\damo_net\windows_enforcer\batch\first_run_enforcement_checks.bat /grant "Administrators":(RX) /q /c >> %LOGFILE%
 
 :: locking down task scheduler - prevent deletion
 @REM reg add "HKEY_LOCAL_MACHINE\Software\Policies\Microsoft\Windows\Task Scheduler5.0" /v "Task Deletion" /t REG_DWORD /d 0 /f
@@ -293,6 +315,30 @@ for /F "tokens=*" %%A in (C:\damo_net\windows_enforcer\batch\winget-uninstalls.t
 			) 
 	)
 )
+
+:: bootstrap successful output flag which is excluded from robocopy overwrite
+if not exist C:\damo_net\windows_enforcer\batch\bootstrap_success.txt  (
+	echo. 2>C:\damo_net\windows_enforcer\batch\bootstrap_success.txt
+	:: remove delete permissions for the bootstrap success file from the Administrators group
+	icacls C:\damo_net\windows_enforcer\batch\bootstrap_success.txt /reset /q /c >> %LOGFILE%
+	icacls C:\damo_net\windows_enforcer\batch\bootstrap_success.txt /inheritance:d >> %LOGFILE%
+	icacls C:\damo_net\windows_enforcer\batch\bootstrap_success.txt /remove:g "Administrators" /q /c >> %LOGFILE%
+	icacls C:\damo_net\windows_enforcer\batch\bootstrap_success.txt /remove:g "Users" /q /c >> %LOGFILE%
+	icacls C:\damo_net\windows_enforcer\batch\bootstrap_success.txt /setowner "SYSTEM" /q /c >> %LOGFILE%
+	echo **bootstrap file and permissions created** >> %LOGFILE%
+	) else (
+		echo **bootstrap file and permissions already exists** >> %LOGFILE%
+	)
+
+echo %TIMESTAMP% > C:\damo_net\windows_enforcer\batch\last_run.txt
+icacls C:\damo_net\windows_enforcer\batch\last_run.txt /reset /q /c >> %LOGFILE%
+icacls C:\damo_net\windows_enforcer\batch\last_run.txt /inheritance:d >> %LOGFILE%
+icacls C:\damo_net\windows_enforcer\batch\last_run.txt /grant "Users":(R) /q /c >> %LOGFILE%
+echo **last run file with timestamp created** >> %LOGFILE%
+
+@REM IF "%user%" == "%usertest%" (
+@REM 	echo "this is a test" > C:\damo_net\windows_enforcer\batch\testing.txt
+@REM 	)
 
 echo *End Installs* >> %LOGFILE%
 echo *End Script* >> %LOGFILE%

@@ -96,31 +96,44 @@ sed -i -e 's/\r$//' ./cert-removal/certificate-present-list.txt 2>&1>/dev/null
 listwinget="./winget-installs.txt"
 while read -r line || [ -n "$line" ]
 do
-  curl --retry 5 -s https://winstall.app/apps/$line | grep 'To install' >/dev/null
-  rc=$?
-  if (($rc == 1))
-  then
-    echo winget issue = $line >> $outputlist
-  fi
+  retry_curl=0
+  while [ $retry_curl -le 5 ]
+  do
+    curl --retry 3 -s https://winstall.app/apps/$line | grep 'To install' >/dev/null
+    rc=$?
+    if (($rc == 1))
+    then
+      retry_curl=$(($retry_curl + 1))
+      if [ $retry_curl -eq 6 ]
+      then
+        echo winget issue = $line >> $outputlist
+      fi
+    else
+      break
+    fi
+  done
 done < "$listwinget"
 
 ## check winget uninstall list
 listwingetrm="./winget-uninstalls.txt"
 while read -r line || [ -n "$line" ]
 do
-  curl -s https://winstall.app/apps/$line | grep 'To install' >/dev/null
-  rc=$?
-  if (($rc == 1))
-  then
-    echo winget uninstall issue = $line >> $outputlist
-  fi
-
-  cat ./winget-installs.txt | grep -w "$line" >/dev/null
-  rc2=$?
-  if (($rc2 == 0))
-  then
-    echo winget uninstall conflict with install input = $line >> $outputlist
-  fi
+  retry_curl=0
+  while [ $retry_curl -le 5 ]
+  do
+    curl --retry 3 -s https://winstall.app/apps/$line | grep 'To install' >/dev/null
+    rc=$?
+    if (($rc == 1))
+    then
+      retry_curl=$(($retry_curl + 1))
+      if [ $retry_curl -eq 6 ]
+      then
+        echo winget issue = $line >> $outputlist
+      fi
+    else
+      break
+    fi
+  done
 done < "$listwingetrm"
 
 ## check github release list
@@ -303,3 +316,6 @@ then
     echo "emailing list"
     echo "Enforce checker script has detected info, issues, and warnings. Refer to the attached text file for details." | mail -A "./enforce-issues.txt" -s "Host Enforcement Checker" -- adam.lechnos@gmail.com
 fi
+
+## outputting last run txt
+date > last_run_enforce-checker.txt

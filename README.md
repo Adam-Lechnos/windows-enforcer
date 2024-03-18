@@ -137,6 +137,21 @@ Trusted Root Certificates may be added for home network devices that contain a w
   * Certificates with the same CN added back to the `trusted-root-certificates` folder are removed from the revocation list.
   * The text files used to track the presence and revocation of certificates are automatically backed up for redundancy. Restoration occurs when the original cert revocation files are missing or corrupted.
 
+#### Creating a new cert
+1. Ensure openssl is installed on the Windows host where the cert is to be generated
+1. Execute the following openssl command:
+   1. ``` batch
+      openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -sha256 -days 3650 -nodes -subj "/C=US/ST=NY/L=Brooklyn/O=DAMO.NET/OU=Network/CN=<CERT NAME>" -addext "subjectAltName=DNS:<DNS ADDRESS 1>,DNS:<DNS ADDRESS 2>,DNS:<DNS ADDRESS 3>,DNS:<DNS ADDRESS 4..>,DNS:<IP ADDRESS>,IP:<IP ADDRESS>"
+      ```
+      `<CERT NAME>` = `router-14brp.damo.net` as an example. This is the part used by the cert manager process above.
+    2. Convert Trusted Root Cert to Windows CRT file
+       ``` batch
+       openssl x509 -outform der -in cert.pem -out your-cert.crt
+       ```
+    3. Upload the private key to the device that will be used with the corresponding public key. Copy the key to a secure location then remove the local copy.
+    4. Place the newly created CRT file inside the `trusted-root-certificates` folder on the NAS device.
+  
+
 ### Windows OS Enforcement
 The following Windows 10/11 Operating System settings are enforced. Explorer.exe will not be rebooted in favor of an uninterrupted end-user experience. Instead, settings will take effect on the next reboot.
 * Audit logging for `logon` and `logoff` events

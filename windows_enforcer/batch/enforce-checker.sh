@@ -47,11 +47,27 @@ then
   echo "cert removal directory missing and re-created - cert-removal" >> $outputlist
 fi
 
-# ensuring scripts folder exists
+# ensuring scripts folder exist
 if ! [ -d ./../../scripts ]
 then
   mkdir ./../../scripts
   echo "scripts folder missing and re-created - script management" >> $outputlist
+fi
+
+# ensure task schedular management files exist
+if ! [ -f "./First Run Enforcement Checks.xml" ]
+then
+  echo "'First Run Enforcement Checks.xml' is missing - task scheduler management" >> $outputlist
+fi
+
+if ! [ -f "../powershell/Network Adapters - All - Reset.xml" ]
+then
+  echo "'Network Adapters - All - Reset.xml' is missing - task scheduler management" >> $outputlist
+fi
+
+if ! [ -f "../powershell/Network_Adaperts-All-Reset-Default.ps1" ]
+then
+  echo "'Network_Adaperts-All-Reset-Default.ps1' is missing - task scheduler management" >> $outputlist
 fi
 
 # restore backup copy of certificate-present-list if the original file is missing or corrupt

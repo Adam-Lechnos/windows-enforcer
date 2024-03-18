@@ -18,7 +18,8 @@ An email alert is sent when issues are discovered with any of the install and/or
 1. Ensure the following *does not exist* for each new target host being bootstrapped:
    1. Drive mapping letter `Z`
    1. Directory path `C:\Tools`
-   1. Directory path `C:\Scripts` 
+   1. Directory path `C:\Scripts`
+1. Administrator permissions to bootstrap using an elevated command prompt.
 
 ### Installation steps for all new clients
 1. Ensure the client is connected to the workgroup, DAMO.NET
@@ -30,8 +31,8 @@ An email alert is sent when issues are discovered with any of the install and/or
 
 ### NAS Installation
 1. Place a copy of the entire enforcement-script-windows folder somewhere within the directory structure of the NAS and create a Shared Folder with read-only permissions.
-2. Update the `first_run_enforcement_checks.bat` script to robocopy from the Shared Folder root recursively via the full path from the client's 'Z' drive mapping, per the snippet:
-  3. ```batch
+1. Update the `first_run_enforcement_checks.bat` script to robocopy from the Shared Folder root recursively via the full path from the client's 'Z' drive mapping, per the snippet:
+  1. ```batch
       :: check if drive is mapped, if not, ping NAS, if fails, skip, otherwise, re-map
       if not exist Z:\ (
       	echo mapped drive not found, pinging NAS >> %LOGFILE%
@@ -52,14 +53,29 @@ An email alert is sent when issues are discovered with any of the install and/or
       	)
       )
      ``` 
-4. Create a cronjob that runs once per day and executes the `enforce-checker.sh` script from the NAS device.
-5. The NAS' IP must be `10.10.0.10`
-6. Additional home networks may be added by following instructions within the `first_run_enforcement_checks.bat` assuming NAS replication exists and the drive letter persists, per the snippet:
-  7. ```batch
-     :: copy and paste the below 2 lines for each network, updating the FQDN of the router hostname and IP and updating the integer value for neterror array
-     ping -n 1 10.10.0.1 | find "TTL" && ping -n 1 -a 10.10.0.1 | find "RT-AC5300-C300" && ipconfig | find "DAMO.NET"
-     set neterror[0]=%errorlevel%
-     ```
+1. Create a cronjob that runs once per day and executes the `enforce-checker.sh` script from the NAS device. The cronjob should use an entrypoint to ensure proper carriage returns
+   1. ``` bash
+      #!/bin/bash
+
+      # entrypoint to execute windows enforcer enforce-checker.sh via crontab
+      fullfilepath=$1
+      sed -i -e 's/\r$//' $fullfilepath
+      /bin/bash $fullfilepath
+      ```
+   1. Give execute permissions to the entrypoint file: `chmod +x /path/to/entrypoint/file`
+   1. Refer to the example entrypoint file `example-crontab-enforcer_entrypoint.sh` in the `windows_enforcer/bash directory`. If the example file does not run, perform the following to correct the carriage returns and move the file outside of the `windows_enforcer` folder into `/opt/damo_net/windows-enforcer`: `sed -i -e 's/\r$//' /path/to/example-crontab-enforcer_entrypoint.sh`.
+   1. ``` bash
+      # example crontab entries
+      MAILTO=adam.lechnos@gmail.com
+      0 0 * * * /opt/damo_net/windows-enforcer/example-crontab-enforcer_entrypoint.sh /nas_path/damo_net/windows-enforcer/bash/enforce-checker.sh
+      ```
+1. The NAS' IP must be `10.10.0.10`
+1. Additional home networks may be added by following instructions within the `first_run_enforcement_checks.bat` assuming NAS replication exists and the drive letter persists, per the snippet:
+   1. ``` batch
+      :: copy and paste the below 2 lines for each network, updating the FQDN of the router hostname and IP and updating the integer value for neterror array
+      ping -n 1 10.10.0.1 | find "TTL" && ping -n 1 -a 10.10.0.1 | find "RT-AC5300-C300" && ipconfig | find "DAMO.NET"
+      set neterror[0]=%errorlevel%
+      ```
 #### Permissions
 * Read access should be the default permission for the parent and subdirectories of the Shared Folder to allow for local Windows [robocopy](https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/robocopy) to copy the data.
 * Write access should only be granted to admins designated to determine host enforcement.

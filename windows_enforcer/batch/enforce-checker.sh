@@ -320,9 +320,10 @@ else
   for filename in ../../../damo_net_last-runs/*.txt
   do
     sed -i -e 's/\r$//' $filename
-    filedate=$(cat $filename | cut -d- -f2)
-    currentdate=$(date | cut -d' ' -f3)
-    subtractdays=$(($currentdate-$filedate))
+    filedate=$(cat $filename | cut -d_ -f1 | cut -c 4-14 | sed 's/-//g' | sed 's/\(.*\)\(.\{4\}\)/\2\1/')
+    currentdate=$(date '+%Y%m%d')
+    let subtractdays=(`date +%s -d $currentdate`-`date +%s -d $filedate`)/86400
+    echo $subtractdays $currentdate $filedate
     basefile=$filename
     host=$(basename $basefile | tr -d .txt)
     nslookup $host | grep -i 'no answer' >/dev/null
@@ -332,9 +333,9 @@ else
     echo "nslookup failed = host is not in DNS. If this is expected then remove the hostname file from 'damo_net_last-runs or it will eventually report 'last runs' errors as well at' - $host" >> $outputlist
     fi
 
-    if [ $subtractdays -ge 28 ]
+    if [ $subtractdays -ge 21 ]
     then
-      echo "last runs = host run has not occured in at least the last 28 days - $host" >> $outputlist
+      echo "last runs = host run has not occured in at least the last 21 days - $host" >> $outputlist
     fi
   done
 fi

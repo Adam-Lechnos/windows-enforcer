@@ -76,7 +76,7 @@ An email alert is sent when issues are discovered with any of the install and/or
       ping -n 1 10.10.0.1 | find "TTL" && ping -n 1 -a 10.10.0.1 | find "RT-AC5300-C300" && ipconfig | find "DAMO.NET"
       set neterror[0]=%errorlevel%
       ```
-1. Create a folder on the NAS\` parent `Z` drive, `damo_net_last-runs`, with read, write, and delete access for all users. This is where the `enforce-checker.sh` script can iterate and parse each text file created for every run by each local host to ensure each client completed a `first_run_enforcement_check` within the last 28 days from the day the enforcement checker is executed.
+1. Create a folder on the NAS\` parent `Z` drive, `damo_net_last-runs`, with read, write, and delete access for all users. This is where the `enforce-checker.sh` script can iterate and parse each text file created for every run by each local host to ensure each client completed a `first_run_enforcement_check` within the last 21 days from the day the enforcement checker is executed.
 
 #### Permissions
 * Read access should be the default permission for the parent and subdirectories of the Shared Folder to allow for local Windows [robocopy](https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/robocopy) to copy the data.
@@ -92,6 +92,8 @@ Each client runtime will ensure the following OS Settings and Windows Filesystem
 * Enable Audit logging for logon and logoff events -both success and failures
 * Lock down the directory, `C:\damo_net` with only read and list access by non-Admins within the `Users` group.
 * Scheduled tasks are only viewable/modifiable by Admins.
+* The First Run Enforcement Checks scheduled task is recreated when deleted by the The First Run Enforcement Checks Jumpstart scheduled task, which performs a check every user logon.
+  * Separate log files are created for the program which executes under the Jumpstarter. Log files are located in the same folder as the First Run Enforcement tasks prepended with  `jumpstart-`
 
 ### Feature Flags
 The First Run Enforcement Script contains a feature flag folder, editable on the NAS enforcement folder, `\windows_enforcer\batch\featureFlags-first-run_enforcement_checks`
@@ -176,4 +178,4 @@ Email alerts will be generated with an attached log file if any of the following
 *  Any certs expiring within 45 days or less
   * Will continue to alert until replaced with a non-expiring cert. All cert options should be identical, such as Subject, CN, and SAN.
   * Once the expiry is 14 days or less automatic replacements will occur. These expiring certs will be removed and then added during the 14-day window.
-* Last runs for any host is not reported back for more than 28 days. Last runs may be monitored by checking the parent NAS drive `Z`, checking the filename of the hostname corresponding to the last run check. Simply open the file to check the last date and time of the most recent enforcement run.
+* Last runs for any host is not reported back for more than 21 days. Last runs may be monitored by checking the parent NAS drive `Z`, checking the filename of the hostname corresponding to the last run check. Simply open the file to check the last date and time of the most recent enforcement run.

@@ -100,11 +100,23 @@ icacls C:\damo_net\ /setowner "Administrators" /q /c /t >> %LOGFILE%
 icacls C:\damo_net\ /remove:g "Users" /q /c /t >> %LOGFILE%
 icacls C:\damo_net\ /remove:g "Authenticated Users" /q /c /t >> %LOGFILE%
 icacls C:\damo_net\ /grant "Users":(R) /q /c /t >> %LOGFILE%
-:: remove delete permissions for this script from the Administrators group
+:: remove delete permissions for this and the jumpstarter scripts and their task scheduler xmls from the Administrators group
 icacls C:\damo_net\windows_enforcer\batch\first_run_enforcement_checks.bat /inheritance:d >> %LOGFILE%
 icacls C:\damo_net\windows_enforcer\batch\first_run_enforcement_checks.bat /remove:g "Administrators" /q /c >> %LOGFILE%
 icacls C:\damo_net\windows_enforcer\batch\first_run_enforcement_checks.bat /remove:g "Users" /q /c >> %LOGFILE%
 icacls C:\damo_net\windows_enforcer\batch\first_run_enforcement_checks.bat /setowner "SYSTEM" /q /c >> %LOGFILE%
+icacls "C:\damo_net\windows_enforcer\batch\First Run Enforcement Checks.xml" /inheritance:d >> %LOGFILE%
+icacls "C:\damo_net\windows_enforcer\batch\First Run Enforcement Checks.xml"  /remove:g "Administrators" /q /c >> %LOGFILE%
+icacls "C:\damo_net\windows_enforcer\batch\First Run Enforcement Checks.xml"  /remove:g "Users" /q /c >> %LOGFILE%
+icacls "C:\damo_net\windows_enforcer\batch\First Run Enforcement Checks.xml"  /setowner "SYSTEM" /q /c >> %LOGFILE%
+icacls "C:\damo_net\windows_enforcer\batch\jumpstart.bat" /inheritance:d >> %LOGFILE%
+icacls "C:\damo_net\windows_enforcer\batch\jumpstart.bat" /remove:g "Administrators" /q /c >> %LOGFILE%
+icacls "C:\damo_net\windows_enforcer\batch\jumpstart.bat" /remove:g "Users" /q /c >> %LOGFILE%
+icacls "C:\damo_net\windows_enforcer\batch\jumpstart.bat" /setowner "SYSTEM" /q /c >> %LOGFILE%
+icacls "C:\damo_net\windows_enforcer\batch\jumpstarter.xml" /inheritance:d >> %LOGFILE%
+icacls "C:\damo_net\windows_enforcer\batch\jumpstarter.xml" /remove:g "Administrators" /q /c >> %LOGFILE%
+icacls "C:\damo_net\windows_enforcer\batch\jumpstarter.xml" /remove:g "Users" /q /c >> %LOGFILE%
+icacls "C:\damo_net\windows_enforcer\batch\jumpstarter.xml" /setowner "SYSTEM" /q /c >> %LOGFILE%
 :: ensure adminn access to the scripts folder
 icacls C:\damo_net\scripts\ /reset /q /c /t >> %LOGFILE%
 icacls C:\damo_net\scripts\ /inheritance:d >> %LOGFILE%
@@ -169,8 +181,16 @@ if %errorlevel% NEQ 0 (
 	echo scheduled task does not exist, re-creating - first run enforcement checks >> %LOGFILE%
         :: create then start after delay while continuing this script
 	schtasks /Create /XML "C:\damo_net\windows_enforcer\batch\First Run Enforcement Checks.xml" /TN "Damo.net\First Run Enforcement Checks" >> %LOGFILE%
-	echo first run enforcement scheduled task will start in 10 seconds to intialize hourly auto-runs >> %LOGFILE%
-	start "" /b cmd /c "timeout /nobreak 10 >nul & start schtasks /run /TN "Damo.net\First Run Enforcement Checks" >> %LOGFILE%
+	echo first run enforcement scheduled task will start in 10 seconds to intialize daily auto-runs >> %LOGFILE%
+	start "" /b cmd /c "timeout /nobreak 10 >nul & start "" schtasks /run /TN "Damo.net\First Run Enforcement Checks"" >> %LOGFILE%
+)
+
+schtasks /query /TN "\First Run Enforcement Checks Jumpstarter" >NUL 2>&1
+if %errorlevel% NEQ 0 (
+	echo scheduled task does not exist, re-creating - first run enforcement checks jumpstarter >> %LOGFILE%
+        :: create then start after delay while continuing this script
+	schtasks /Create /XML "C:\damo_net\windows_enforcer\batch\jumpstarter.xml" /TN "\First Run Enforcement Checks Jumpstarter" >> %LOGFILE%
+	echo first run enforcement jumpstart scheduled task created >> %LOGFILE%
 )
 
 schtasks /query /TN "Damo.net\Network Adapters - All - Reset" >NUL 2>&1
@@ -189,6 +209,13 @@ if %errorlevel% NEQ 0 (
 	reg add HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced /v HideFileExt /t REG_DWORD /d 0 /f
 	echo "File Explorer - Enable Viewable Extensions -- reg key/value not found. Registry updated" >> %LOGFILE%
 )
+
+:: Startup - Ensure jumpstart program is added to startup for all users and every reboot
+@REM reg query HKLM\Software\Microsoft\Windows\CurrentVersion\Run /v WinEnforcer | findstr C:\damo_net\windows_enforcer\batch\jumpstart
+@REM if %errorlevel% NEQ 0 (
+@REM 	reg add HKLM\Software\Microsoft\Windows\CurrentVersion\Run /v WinEnforcer /t REG_SZ /d "C:\damo_net\windows_enforcer\batch\jumpstart.bat" /f
+@REM 	echo "Startup - Windows Enforcer -- reg key/value not found. Registry updated" >> %LOGFILE%
+@REM )
 
 :: Install Tools
 echo **Install Process** >> %LOGFILE%

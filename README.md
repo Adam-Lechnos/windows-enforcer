@@ -179,3 +179,11 @@ Email alerts will be generated with an attached log file if any of the following
   * Will continue to alert until replaced with a non-expiring cert. All cert options should be identical, such as Subject, CN, and SAN.
   * Once the expiry is 14 days or less automatic replacements will occur. These expiring certs will be removed and then added during the 14-day window.
 * Last runs for any host is not reported back for more than 21 days. Last runs may be monitored by checking the parent NAS drive `Z`, checking the filename of the hostname corresponding to the last run check. Simply open the file to check the last date and time of the most recent enforcement run.
+* The `enforce-checker.sh` produces a log file in `windows_enforcer\last_run_enforce-checker.txt`. The log file is overwritten by every run of the process.
+
+#### Checking last runs
+The Last Run Checker is presents a list of all hosts with their last First Run Enforcement Check runs. The same files parsed by the tools are also used by the Enforcement Checker to produce email alerts for each host that did not incur a run in 21 days or more. These emails are sent with a unified attachment of all other issues detected by the Enforcement Checker. The Last Run Checker tool may only be executed on the NAS device and not on the clients-side and are excluded from the enforcement's copy process.
+
+* To use the tool, execute the following command from shell directly on the NAS: `Z:\<NAS HOST>\<PARENT DIRECTORY>\last-runs-check.sh`
+* The suite of files outputted by every host and parsed by the tool is located at `Z:\<NAS HOST>\damo_net_last-runs`
+* Logs are overwritten by every host with a timestamp indicating the last run time and date.

@@ -230,6 +230,12 @@ else
 
   for certfile in $rootcertdir/*.crt
   do
+
+    ## perform cert validation on each file and report validation errors
+    if ! openssl x509 -in $certfile -text -noout 2>&1>/dev/null
+    then
+      echo "cert verification failure - '$certfile'. This may cause other cert related errors to be reported. Fix the certificate and retry before any additional troubleshooting" >> $outputlist
+    fi
     
     ## create list of certs to check for removal on current run
     listpresentcertscr=$(openssl x509 -in $certfile -noout -subject | sed -e "s/ //g" | sed -n '/^subject/s/^.*CN=//p')
@@ -323,7 +329,7 @@ else
     filedate=$(cat $filename | cut -d_ -f1 | cut -c 4-14 | sed 's/-//g' | sed 's/\(.*\)\(.\{4\}\)/\2\1/')
     currentdate=$(date '+%Y%m%d')
     let subtractdays=(`date +%s -d $currentdate`-`date +%s -d $filedate`)/86400
-    echo $subtractdays $currentdate $filedate
+    #echo $subtractdays $currentdate $filedate
     basefile=$filename
     host=$(basename $basefile | tr -d .txt)
     nslookup $host | grep -i 'no answer' >/dev/null

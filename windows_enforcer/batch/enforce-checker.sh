@@ -100,12 +100,12 @@ do
   retry_curl=0
   while [ $retry_curl -le 5 ]
   do
-    curl --retry 3 -s https://winstall.app/apps/$line | grep 'To install' >/dev/null
+    curl --retry 5 -s https://winstall.app/apps/$line | grep 'To install' >/dev/null
     rc=$?
     if (($rc == 1))
     then
       retry_curl=$(($retry_curl + 1))
-      if [ $retry_curl -eq 6 ]
+      if [ $retry_curl -eq 10 ]
       then
         echo winget issue = $line >> $outputlist
       fi
@@ -120,9 +120,9 @@ listwingetrm="./winget-uninstalls.txt"
 while read -r line || [ -n "$line" ]
 do
   retry_curl=0
-  while [ $retry_curl -le 5 ]
+  while [ $retry_curl -le 10 ]
   do
-    curl --retry 3 -s https://winstall.app/apps/$line | grep 'To install' >/dev/null
+    curl --retry 5 -s https://winstall.app/apps/$line | grep 'To install' >/dev/null
     rc=$?
     if (($rc == 1))
     then
@@ -200,6 +200,9 @@ then
   mkdir $rootcertdir
 fi
 
+## remove empty folder if it exists, '../../trusted-root-certificates-INVALID'
+if [ -d "../../trusted-root-certificates-INVALID" ] && [ -z "$(ls -A ../../trusted-root-certificates-INVALID)" ]; then rmdir "../../trusted-root-certificates-INVALID"; fi 
+
 # if [ -f $fffolder/certificate-refresh_renameMe-ON.txt ]
 # then
 #   rm $fffolder/certificate-refresh_renameMe-ON.txt
@@ -231,10 +234,13 @@ else
   for certfile in $rootcertdir/*.crt
   do
 
-    ## perform cert validation on each file and report validation errors
+    ## perform cert validation on each file and move cert, report validation errors, and continue to the next cert file 
     if ! openssl x509 -in $certfile -text -noout 2>&1>/dev/null
     then
-      echo "cert verification failure - '$certfile'. This may cause other cert related errors to be reported. Fix the certificate and retry before any additional troubleshooting" >> $outputlist
+      echo "cert verification failure - '$(basename $certfile)' -moved to the 'trusted_root_certificates-INVALID' directory and will be added to the revocation list upon next enforce run. Recreate and verfiy this cert" >> $outputlist
+      if [ ! -d "../../trusted-root-certificates-INVALID" ]; then mkdir "../../trusted-root-certificates-INVALID"; fi 
+      mv $certfile "../../trusted-root-certificates-INVALID/$(basename $certfile)"
+      continue
     fi
     
     ## create list of certs to check for removal on current run

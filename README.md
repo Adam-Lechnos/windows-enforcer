@@ -22,23 +22,23 @@ An email alert is sent when issues are discovered with any of the install and/or
 1. Administrator permissions to bootstrap using an elevated command prompt.
 
 ### Installation steps for all new clients
-1. Ensure the client is connected to the workgroup, DAMO.NET
-2. Copy the file `damo_net\windows_enforcer\batch\first_run_enforcement_checks.bat`, locally to the the 'C' drive from the NAS server, ensuring the client is on an `DAMO.NET` network.
-3. Ensure the NAS is mapped as drive 'Z', if not, ensure you can ping `10.10.0.10`, the NAS server. (Note: If any other drive is mapped to 'Z', the script will fail)
+1. Ensure the client is connected to the workgroup, <DOMAIN>
+2. Copy the file `<DOMAIN>\windows_enforcer\batch\first_run_enforcement_checks.bat`, locally to the the 'C' drive from the NAS server, ensuring the client is on an `<DOMAIN>` network.
+3. Ensure the NAS is mapped as drive 'Z', if not, ensure you can ping `<ROUTER IP>`, the NAS server. (Note: If any other drive is mapped to 'Z', the script will fail)
 4. Start an elevated command prompt, then execute the locally copied file.
-5. Check the `C:\damo_net\windows_enforcer\batch` folder, ensuring the files `C:\damo_net\windows_enforcer\batch\first_run_enforcement_checks.bat` and `First Run Enforcement Checks.xml` exist.
-6. Delete the manually executed `first_run_enforcement_checks.bat` file (which should *not* be the `C:\damo_net\windows_enforcer\batch\first_run_enforcement_checks.bat` copy).
+5. Check the `C:\<DOMAIN>\windows_enforcer\batch` folder, ensuring the files `C:\<DOMAIN>\windows_enforcer\batch\first_run_enforcement_checks.bat` and `First Run Enforcement Checks.xml` exist.
+6. Delete the manually executed `first_run_enforcement_checks.bat` file (which should *not* be the `C:\<DOMAIN>\windows_enforcer\batch\first_run_enforcement_checks.bat` copy).
 
 ### NAS Installation
 1. Ensure `xmllint` is installed by running the following command" `if ! command -v xmllint; then sudo apt install libxml2-utils; fi`.
 1. Place a copy of the entire enforcement-script-windows folder somewhere within the directory structure of the NAS and create a Shared Folder with read-only permissions.
-1. Update the `first_run_enforcement_checks.bat` script to robocopy from the Shared Folder root recursively via the full path from the client's 'Z' drive mapping, per the snippet:
+1. Update the `first_run_enforcement_checks.bat` and `jumpstart.bat` scripts to robocopy from the Shared Folder root recursively via the full path from the client's 'Z' drive mapping, per the snippet:
   1. ```batch
       :: check if drive is mapped, if not, ping NAS, if fails, skip, otherwise, re-map
       if not exist Z:\ (
       	echo mapped drive not found, pinging NAS >> %LOGFILE%
       	:: use IP of NAS device
-      	ping -n 1 10.10.0.1 | find "TTL"
+      	ping -n 1 <ROUTER IP> | find "TTL"
       	if not errorlevel 1 (
       		echo re-mapping NAS, ping responded >> %LOGFILE%
       		goto resync
@@ -47,7 +47,7 @@ An email alert is sent when issues are discovered with any of the install and/or
       		echo will attempt remaining enforcement tasks, which will fail if at least one sync has not occurred >> %LOGFILE%
       	) 
       ) else (
-      	if exist Z:\damo-net\windows_enforcer\batch\first_run_enforcement_checks.bat (
+      	if exist Z:\<DOMAIN>\windows_enforcer\batch\first_run_enforcement_checks.bat (
       		goto resync
       	) else (
       		*** echo Z drive mapping is incorrect. Un-map existing Z drive, then try again *** >> %LOGFILE%
@@ -64,20 +64,20 @@ An email alert is sent when issues are discovered with any of the install and/or
       /bin/bash $fullfilepath
       ```
    1. Give execute permissions to the entrypoint file: `chmod +x /path/to/entrypoint/file`
-   1. Refer to the example entrypoint file `example-crontab-enforcer_entrypoint.sh` in the `windows_enforcer/bash directory`. If the example file does not run, perform the following to correct the carriage returns and move the file outside of the `windows_enforcer` folder into `/opt/damo_net/windows-enforcer`: `sed -i -e 's/\r$//' /path/to/example-crontab-enforcer_entrypoint.sh`.
+   1. Refer to the example entrypoint file `example-crontab-enforcer_entrypoint.sh` in the `windows_enforcer/bash directory`. If the example file does not run, perform the following to correct the carriage returns and move the file outside of the `windows_enforcer` folder into `/opt/<DOMAIN>/windows-enforcer`: `sed -i -e 's/\r$//' /path/to/example-crontab-enforcer_entrypoint.sh`.
    1. ``` bash
       # example crontab entries
-      MAILTO=adam.lechnos@gmail.com
-      0 0 * * * /opt/damo_net/windows-enforcer/example-crontab-enforcer_entrypoint.sh /nas_path/damo_net/windows-enforcer/bash/enforce-checker.sh
+      MAILTO=<EMAIL ADDRESS>
+      0 0 * * * /opt/<DOMAIN>/windows-enforcer/example-crontab-enforcer_entrypoint.sh /nas_path/<DOMAIN>/windows-enforcer/bash/enforce-checker.sh
       ```
 1. The NAS' IP must be `10.10.0.10`
 1. Additional home networks may be added by following instructions within the `first_run_enforcement_checks.bat` and `jumpstart.bat` scripts, assuming NAS replication exists and the drive letter persists, per the snippet:
    1. ``` batch
       :: copy and paste the below 2 lines for each network, updating the FQDN of the router hostname and IP and updating the integer value for neterror array
-      ping -n 1 10.10.0.1 | find "TTL" && ping -n 1 -a 10.10.0.1 | find "RT-AC5300-C300" && ipconfig | find "DAMO.NET"
+      ping -n 1 <ROUTER IP> | find "TTL" && ping -n 1 -a <ROUTER IP> | find "<ROUTER HOSTNAME>" && ipconfig | find "<DOMAIN>"
       set neterror[0]=%errorlevel%
       ```
-1. Create a folder on the NAS\` parent `Z` drive, `damo_net_last-runs`, with read, write, and delete access for all users. This is where the `enforce-checker.sh` script can iterate and parse each text file created for every run by each local host to ensure each client completed a `first_run_enforcement_check` within the last 21 days from the day the enforcement checker is executed.
+1. Create a folder on the NAS\` parent `Z` drive, `<DOMAIN>_last-runs`, with read, write, and delete access for all users. This is where the `enforce-checker.sh` script can iterate and parse each text file created for every run by each local host to ensure each client completed a `first_run_enforcement_check` within the last 21 days from the day the enforcement checker is executed.
 
 #### Permissions
 * Read access should be the default permission for the parent and subdirectories of the Shared Folder to allow for local Windows [robocopy](https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/robocopy) to copy the data.
@@ -86,12 +86,12 @@ An email alert is sent when issues are discovered with any of the install and/or
 ### Updating files
 From the NAS drive's enforcement folder, make changes to any file and it will sync and either execute or install.
 
-**IMPORTANT** Never change the name of the file, `C:\damo_net\windows_enforcer\batch\first_run_enforcement_checks.bat`, either within the NAS directory or locally on any client. If the 'First Run Enforcement Checks' scheduled task is ever deleted or modified, the above steps should be followed.
+**IMPORTANT** Never change the name of the file, `C:\<DOMAIN>\windows_enforcer\batch\first_run_enforcement_checks.bat`, either within the NAS directory or locally on any client. If the 'First Run Enforcement Checks' scheduled task is ever deleted or modified, the above steps should be followed.
 
 ### Tamper Protection
 Each client runtime will ensure the following OS Settings and Windows Filesystem Permissions
 * Enable Audit logging for logon and logoff events -both success and failures
-* Lock down the directory, `C:\damo_net` with only read and list access by non-Admins within the `Users` group.
+* Lock down the directory, `C:\<DOMAIN>` with only read and list access by non-Admins within the `Users` group.
 * Scheduled tasks are only viewable/modifiable by Admins.
 * The First Run Enforcement Checks scheduled task is recreated when deleted by the The First Run Enforcement Checks Jumpstart scheduled task, which performs a check every user logon.
   * Separate log files are created for the program which executes under the Jumpstarter. Log files are located in the same folder as the First Run Enforcement tasks prepended with  `jumpstart-`. Refer to the [Logging](#Logging) section for more info.
@@ -117,8 +117,8 @@ Use extreme caution in editing the Task Scheduler files which determine the sche
 A Powershell facility exists in order to add customizations to the enforcement process. Add customizations with extreme caution ensuring the script has be thoroughly tested, ideally in a separate `test.ps1` file. Edit the following file to add custom scripting: `\windows_enforcer\powershell\first_run_enforcement-powershell.ps1`. This file may only be edited from the NAS device with proper write permissions. Be sure not to edit 
 
 ### Logging
-Scripts executed manually will output logging data to the logged-in user's temp directory --> `%temp%\damo-net\logs` (`C:\Users\<user>\AppData\Local\Temp\damo_net`)
-Scripts executed via task scheduler, even if executed manually, will output logging data from the system's specified log directory --> `%temp%\damo-net\logs` (`C:\Windows\temp`)
+Scripts executed manually will output logging data to the logged-in user's temp directory --> `%temp%\<DOMAIN>\logs` (`C:\Users\<user>\AppData\Local\Temp\<DOMAIN>`)
+Scripts executed via task scheduler, even if executed manually, will output logging data from the system's specified log directory --> `%temp%\<DOMAIN>\logs` (`C:\Windows\temp`)
 A new log is generated with the execution's point-in-time date and time stamp appended.
 
 If the client is off the network, the script will attempt to execute enforcement tasks, which are expected to fail if at least one sync has not occurred or if the files were deleted within the local scripts folder. The next successful re-sync will re-create any missing files.
@@ -162,9 +162,9 @@ Trusted Root Certificates may be added for home network devices that contain a w
 1. Ensure openssl is installed on the Windows host where the cert is to be generated
 1. Execute the following openssl command:
    1. ``` batch
-      openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -sha256 -days 3650 -nodes -subj "/C=US/ST=NY/L=Brooklyn/O=DAMO.NET/OU=Network/CN=<CERT NAME>" -addext "subjectAltName=DNS:<DNS ADDRESS 1>,DNS:<DNS ADDRESS 2>,DNS:<DNS ADDRESS 3>,DNS:<DNS ADDRESS 4..>,DNS:<IP ADDRESS>,IP:<IP ADDRESS>"
+      openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -sha256 -days 3650 -nodes -subj "/C=US/ST=NY/L=NY/O=<DOMAIN>/OU=Network/CN=<CERT NAME>" -addext "subjectAltName=DNS:<DNS ADDRESS 1>,DNS:<DNS ADDRESS 2>,DNS:<DNS ADDRESS 3>,DNS:<DNS ADDRESS 4..>,DNS:<IP ADDRESS>,IP:<IP ADDRESS>"
       ```
-      `<CERT NAME>` = `router-14brp.damo.net` as an example. This is the part used by the cert manager process above.
+      `<CERT NAME>` = `router-14brp.<DOMAIN>` as an example. This is the part used by the cert manager process above.
     2. Convert Trusted Root Cert to Windows CRT file
        ``` batch
        openssl x509 -outform der -in cert.pem -out your-cert.crt
@@ -180,11 +180,11 @@ The following Windows 10/11 Operating System settings are enforced. Explorer.exe
   * `Object access` (file and folder access; only those then enabled inside advanced ACLs)
   * `Privilege use`
 * The following files/folders are enabled recursively for audit logging upon `Success` and `Failure` events for all users
-  * `C:\damo_net\*`
+  * `C:\<DOMAIN>\*`
 * Windows File Explorer - Enable viewable file extensions
 
 ### File Replication
-A files placed within the directory on the NAS enforcement side, ``C:\damo_net\`, will be replicated to all bootstrapped hosts. By default, a `scripts` folder is created and enforced to ensure a predicable folder structure across all hosts for future automation and the enforcement of local scripts within the network.
+A files placed within the directory on the NAS enforcement side, ``C:\<DOMAIN>\`, will be replicated to all bootstrapped hosts. By default, a `scripts` folder is created and enforced to ensure a predicable folder structure across all hosts for future automation and the enforcement of local scripts within the network.
 
 ### Enforcement Checker
 Enforcement checker runs via cron to check for proper file and folder hygiene. It ensure the requisite certificate and installer management files are present and formatted correctly. Email alerts are sent out if any issues are detected including certain informational and warning types.
@@ -210,7 +210,7 @@ Email alerts will be generated with an attached log file if any of the following
 The Last Run Checker is presents a list of all hosts with their last First Run Enforcement Check runs. The same files parsed by the tools are also used by the Enforcement Checker to produce email alerts for each host that did not incur a run in 21 days or more. These emails are sent with a unified attachment of all other issues detected by the Enforcement Checker; for hosts which meet this criteria, an indicator will be presented within the output. The Last Run Checker tool may only be executed on the NAS device and not on the clients-side and are excluded from the enforcement's copy process.
 
 * To use the tool, execute the following command from shell directly on the NAS: `Z:\<NAS HOST>\<PARENT DIRECTORY>\last-runs-check.sh`
-* The suite of files outputted by every host and parsed by the tool is located at `Z:\<NAS HOST>\damo_net_last-runs`
+* The suite of files outputted by every host and parsed by the tool is located at `Z:\<NAS HOST>\<DOMAIN>_last-runs`
 * Logs are overwritten by every host with a timestamp indicating the last run time and date.
 
 #### Certificate Check CLI

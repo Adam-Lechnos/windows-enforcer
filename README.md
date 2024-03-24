@@ -152,11 +152,16 @@ Trusted Root Certificates may be added for home network devices that contain a w
        ```
     3. Upload the private key to the device that will be used with the corresponding public key. Copy the key to a secure location then remove the local copy.
     4. Place the newly created CRT file inside the `trusted-root-certificates` folder on the NAS device.
-  
 
 ### Windows OS Enforcement
 The following Windows 10/11 Operating System settings are enforced. Explorer.exe will not be rebooted in favor of an uninterrupted end-user experience. Instead, settings will take effect on the next reboot.
-* Audit logging for `logon` and `logoff` events
+* Audit logging enabled for the following `Success` and `Failure` events:
+  * `logon` and `logoff` events (including account events)
+  * `Account management`
+  * `Object access` (file and folder access; only those then enabled inside advanced ACLs)
+  * `Privilege use`
+* The following files/folders are enabled recursively for audit logging upon `Success` and `Failure` events for all users
+  * `C:\damo_net\*`
 * Windows File Explorer - Enable viewable file extensions
 
 ### File Replication

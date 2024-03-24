@@ -105,6 +105,10 @@ icacls C:\damo_net\windows_enforcer\batch\first_run_enforcement_checks.bat /inhe
 icacls C:\damo_net\windows_enforcer\batch\first_run_enforcement_checks.bat /remove:g "Administrators" /q /c >> %LOGFILE%
 icacls C:\damo_net\windows_enforcer\batch\first_run_enforcement_checks.bat /remove:g "Users" /q /c >> %LOGFILE%
 icacls C:\damo_net\windows_enforcer\batch\first_run_enforcement_checks.bat /setowner "SYSTEM" /q /c >> %LOGFILE%
+icacls C:\damo_net\windows_enforcer\powershell\first_run_enforcement-powershell.ps1 /inheritance:d >> %LOGFILE%
+icacls C:\damo_net\windows_enforcer\powershell\first_run_enforcement-powershell.ps1 /remove:g "Administrators" /q /c >> %LOGFILE%
+icacls C:\damo_net\windows_enforcer\powershell\first_run_enforcement-powershell.ps1 /remove:g "Users" /q /c >> %LOGFILE%
+icacls C:\damo_net\windows_enforcer\powershell\first_run_enforcement-powershell.ps1 /setowner "SYSTEM" /q /c >> %LOGFILE%
 icacls "C:\damo_net\windows_enforcer\batch\First Run Enforcement Checks.xml" /inheritance:d >> %LOGFILE%
 icacls "C:\damo_net\windows_enforcer\batch\First Run Enforcement Checks.xml"  /remove:g "Administrators" /q /c >> %LOGFILE%
 icacls "C:\damo_net\windows_enforcer\batch\First Run Enforcement Checks.xml"  /remove:g "Users" /q /c >> %LOGFILE%
@@ -157,13 +161,13 @@ if exist C:\damo_net\windows_enforcer\batch\cert-removal\cert-revoked.txt (
 
 :: remove before installing certs if feature flag active - via present file name and its list of 'Issued To' cert names (usefull for replacing expired certs)
 if exist C:\damo_net\windows_enforcer\batch\featureFlags-first-run_enforcement_checks\certificate-refresh_renameMe-ON.txt (
-	echo "always active feature flag - removing trusted root certificates listed in file before installing"  >> %LOGFILE%
-	for /F "tokens=*" %%A in (C:\damo_net\windows_enforcer\batch\featureFlags-first-run_enforcement_checks\certificate-refresh_renameMe-ON.txt) do certutil.exe -delstore root %%A && echo ** Cert Name: %%A **  >> %LOGFILE%
+	echo "always active feature flag - removing trusted root certificates listed in file before installing" >> %LOGFILE%
+	for /F "tokens=*" %%A in (C:\damo_net\windows_enforcer\batch\featureFlags-first-run_enforcement_checks\certificate-refresh_renameMe-ON.txt) do certutil.exe -delstore root %%A && echo ** Cert Name: %%A ** >> %LOGFILE%
 )
 
 :: install trusted root certificates if not present on local host
 echo installing trusted root certificates  >> %LOGFILE%
-for /f %%f in ('dir /b %temp%\damo_net\trusted-root-certificates\') do certutil.exe -addstore root %temp%\damo_net\trusted-root-certificates\%%f && echo ** File: %%f **  >> %LOGFILE%
+for /f %%f in ('dir /b %temp%\damo_net\trusted-root-certificates\') do certutil.exe -addstore root %temp%\damo_net\trusted-root-certificates\%%f && echo ** File: %%f ** >> %LOGFILE%
 
 :: Ensure enablement for auditing/logging logon and logoff events
 echo *ensure enablement of audit logging for logon and logoff events* >> %LOGFILE%
@@ -201,14 +205,25 @@ if %errorlevel% NEQ 0 (
 )
 
 :: Windows OS Settings
-echo **Windows OS Settings Enforcement** >> %LOGFILE%
+echo "*Windows OS Settings Enforcement*" >> %LOGFILE%
 
 :: File Explorer - Enable Viewable Extensions
+echo "**ensuring enforcement of file explorer settings**" >> %LOGFILE%
 reg query HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced /v HideFileExt | findstr "0x0"
 if %errorlevel% NEQ 0 (
 	reg add HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced /v HideFileExt /t REG_DWORD /d 0 /f
 	echo "File Explorer - Enable Viewable Extensions -- reg key/value not found. Registry updated" >> %LOGFILE%
 )
+
+:: Local Audit Policy
+echo "**ensuring enforcement of audit policy**" >> %LOGFILE%
+auditpol /set /Category:"Object Access" /success:enable /failure:enable
+auditpol /set /Category:"Account Logon" /success:enable /failure:enable
+auditpol /set /Category:"Privilege Use" /success:enable /failure:enable
+auditpol /set /Category:"Account Management" /success:enable /failure:enable
+
+:: Enable Auditing for all users, all events, all event types, for local damo_net folder. Logging is set inside the script and outputs to a separate file.
+Powershell.exe -WindowStyle hidden -executionpolicy remotesigned -File C:\damo_net\windows_enforcer\powershell\first_run_enforcement-powershell.ps1
 
 :: Startup - Ensure jumpstart program is added to startup for all users and every reboot
 @REM reg query HKLM\Software\Microsoft\Windows\CurrentVersion\Run /v WinEnforcer | findstr C:\damo_net\windows_enforcer\batch\jumpstart

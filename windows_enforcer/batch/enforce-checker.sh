@@ -92,6 +92,7 @@ sed -i -e 's/\r$//' ./github-raw-installs.txt 2>&1>/dev/null
 sed -i -e 's/\r$//' ./cert-removal/cert-revoked.txt 2>&1>/dev/null
 sed -i -e 's/\r$//' ./cert-removal/certificate-present-list.txt 2>&1>/dev/null
 sed -i -e 's/\r$//' ../../last-runs-check.sh 2>&1>/dev/null
+sed -i -e 's/\r$//' ../../cert-check.sh 2>&1>/dev/null
 
 ## check winget list
 listwinget="./winget-installs.txt"

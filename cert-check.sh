@@ -1,4 +1,7 @@
 #!/bin/bash
+
+cd "$(dirname "$0")"
+if [ ! -d trusted-root-certificates ]; then echo "Trusted Root Cert folder not found (trusted-root-certificates).. exiting" && exit 1; fi
 printf "\n"
 echo "File Name - Subject - Expiration - Expires <= 45 Days (X)"
 echo "-------------------------------------------------------------------------------------------------"

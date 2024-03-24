@@ -52,7 +52,7 @@
   </Settings>
   <Actions Context="Author">
     <Exec>
-      <Command>C:\damo_net\windows_enforcer\batch\first_run_enforcement_checks.bat</Command>
+      <Command>C:\<DOMAIN>\windows_enforcer\batch\first_run_enforcement_checks.bat</Command>
     </Exec>
   </Actions>
 </Task>

@@ -12,8 +12,12 @@ Local hosts are first bootstrapped, which executes a series of tasks: creating t
 An enforcement cron job runs on the NAS which performs the management of certificates, checking of valid packages for install management options, and certificate renewal and revocation for certificate management files.
 An email alert is sent when issues are discovered with any of the install and/or certificate management files including certificate revocation notices.
 
-### Substitution when reading
-Replace the following when following for this readme to apply to your internal network in addition to the [Scheduled Tasks](#Editing-Scheduled-Tasks) XML files.
+### Substitution when reading this document
+Replace the following when following for this readme to apply to your internal network in addition to the [Scheduled Tasks](#Editing-Scheduled-Tasks) XML files:
+* `<DOMAIN>`: When referring to a folder path, user `_` instead of `.` characters. i.e., `Google_com` instead of `Google.com`. Non folder paths should retain the original `.` character such as when pinging a device.
+  * This does not apply to the XML files for Scheduled Tasks except where script calls via folder paths are defined. 
+* `<ROUTER IP>`: Internal IP of your router. Must respond to ping internally.
+* `<ROUTER HOSTNAME>`: Internal hostname of your router. Must be pingable and resolvable via `nslookup`
 
 ### Target Host Pre-reqs
 1. [Winget](https://learn.microsoft.com/en-us/windows/package-manager/winget/) and [OpenSSL](https://winstall.app/apps/ShiningLight.OpenSSL) are installed

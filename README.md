@@ -70,7 +70,7 @@ An email alert is sent when issues are discovered with any of the install and/or
       MAILTO=<EMAIL ADDRESS>
       0 0 * * * /opt/<DOMAIN>/windows-enforcer/example-crontab-enforcer_entrypoint.sh /nas_path/<DOMAIN>/windows-enforcer/bash/enforce-checker.sh
       ```
-1. The NAS' IP must be `10.10.0.10`
+1. The NAS' IP must be `<ROUTER IP>0`
 1. Additional home networks may be added by following instructions within the `first_run_enforcement_checks.bat` and `jumpstart.bat` scripts, assuming NAS replication exists and the drive letter persists, per the snippet:
    1. ``` batch
       :: copy and paste the below 2 lines for each network, updating the FQDN of the router hostname and IP and updating the integer value for neterror array

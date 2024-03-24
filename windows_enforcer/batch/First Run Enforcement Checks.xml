@@ -2,9 +2,9 @@
 <Task version="1.2" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
   <RegistrationInfo>
     <Date>2024-01-17T16:02:39.1923173</Date>
-    <Author>DOMAIN\adaml</Author>
+    <Author><DOMAIN>\adaml</Author>
     <Description>First run enforcement ensuring all required admin scripts, files, installs, and scheduled tasks exist.</Description>
-    <URI>\Damo.net\First Run Enforcement Checks</URI>
+    <URI>\<DOMAIN>\First Run Enforcement Checks</URI>
   </RegistrationInfo>
   <Triggers>
     <LogonTrigger>

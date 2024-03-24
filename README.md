@@ -18,7 +18,7 @@ An email alert is sent when issues are discovered with any of the install and/or
 1. Ensure the following *does not exist* for each new target host being bootstrapped:
    1. Drive mapping letter `Z`
    1. Directory path `C:\Tools`
-   1. Directory path `C:\Scripts`
+   1. Directory path `C:\<DOMAIN>`
 1. Administrator permissions to bootstrap using an elevated command prompt.
 
 ### Installation steps for all new clients

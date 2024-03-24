@@ -98,6 +98,7 @@ From the NAS drive's enforcement folder, make changes to any file and it will sy
 ### Tamper Protection
 Each client runtime will ensure the following OS Settings and Windows Filesystem Permissions
 * Enable Audit logging for logon and logoff events -both success and failures
+* Enable Audit logging for all objects within the `C:\<DOMAIN>` directory for both success and failures.
 * Lock down the directory, `C:\<DOMAIN>` with only read and list access by non-Admins within the `Users` group.
 * Scheduled tasks are only viewable/modifiable by Admins.
 * The First Run Enforcement Checks scheduled task is recreated when deleted by the The First Run Enforcement Checks Jumpstart scheduled task, which performs a check every user logon.

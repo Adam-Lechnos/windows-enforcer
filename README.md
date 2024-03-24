@@ -70,7 +70,7 @@ An email alert is sent when issues are discovered with any of the install and/or
       0 0 * * * /opt/damo_net/windows-enforcer/example-crontab-enforcer_entrypoint.sh /nas_path/damo_net/windows-enforcer/bash/enforce-checker.sh
       ```
 1. The NAS' IP must be `10.10.0.10`
-1. Additional home networks may be added by following instructions within the `first_run_enforcement_checks.bat` assuming NAS replication exists and the drive letter persists, per the snippet:
+1. Additional home networks may be added by following instructions within the `first_run_enforcement_checks.bat` and `jumpstart.bat` scripts, assuming NAS replication exists and the drive letter persists, per the snippet:
    1. ``` batch
       :: copy and paste the below 2 lines for each network, updating the FQDN of the router hostname and IP and updating the integer value for neterror array
       ping -n 1 10.10.0.1 | find "TTL" && ping -n 1 -a 10.10.0.1 | find "RT-AC5300-C300" && ipconfig | find "DAMO.NET"
@@ -94,6 +94,7 @@ Each client runtime will ensure the following OS Settings and Windows Filesystem
 * Scheduled tasks are only viewable/modifiable by Admins.
 * The First Run Enforcement Checks scheduled task is recreated when deleted by the The First Run Enforcement Checks Jumpstart scheduled task, which performs a check every user logon.
   * Separate log files are created for the program which executes under the Jumpstarter. Log files are located in the same folder as the First Run Enforcement tasks prepended with  `jumpstart-`
+* The Jumpstart process runs every logon and every 3 days, checking scheduled tasks, scripts files, and last runs. Any errors will trigger re-syncing of the enforcement folder and re-creation of the scheduled tasks.
 
 ### Feature Flags
 The First Run Enforcement Script contains a feature flag folder, editable on the NAS enforcement folder, `\windows_enforcer\batch\featureFlags-first-run_enforcement_checks`

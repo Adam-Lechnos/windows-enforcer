@@ -38,7 +38,7 @@ if not errorlevel 0 (
 :: Main entry point for running enforcement and syncing data for Damo.net admin settings. Never rename or delete this file.
 
 :: check if on DAMO.NET workgroup (router name must match)
-echo checking if on proper DAMO.NET workgroup >> %LOGFILE%
+echo "checking if on proper DAMO.NET workgroup" >> %LOGFILE%
 :: copy and paste the below 2 lines for each network, updating the FQDN of the router hostname and IP and updating the integer value for neterror array
 ping -n 1 10.10.0.1 | find "TTL" && ping -n 1 -a 10.10.0.1 | find "RT-AC5300-C300" && ipconfig | find "DAMO.NET"
 set neterror[0]=%errorlevel%
@@ -50,14 +50,14 @@ for /L %%n in (0,1,0) do (
 	)
 
 :: exit with message if no 0 error levels found
-echo ** DAMO.NET home network not detected, exiting ** >> %LOGFILE%
+echo "** DAMO.NET home network not detected, exiting **" >> %LOGFILE%
 exit
 
 :start
-echo ** DAMO.NET workgroup detected, continuing... ** >> %LOGFILE%
+echo "** DAMO.NET workgroup detected, continuing... **" >> %LOGFILE%
 :: copy itself if file does not exist in designated location
 if not exist C:\damo_net\windows_enforcer\first_run_enforcement_checks.bat (
-	echo first run enforcement script does not exist, copying and executing remaining enforcement checks >> %LOGFILE%
+	echo "first run enforcement script does not exist, copying and executing remaining enforcement checks" >> %LOGFILE%
 	mkdir C:\damo_net\windows_enforcer
 	copy "%~f0" C:\damo_net\windows_enforcer\first_run_enforcement_checks.bat
 )
@@ -85,7 +85,7 @@ if not exist Z:\ (
 )
 
 :resync
-echo ** syncing files with NAS enforcement folder ** >> %LOGFILE%
+echo "** syncing files with NAS enforcement folder **" >> %LOGFILE%
 :: sync scripts
 robocopy C:\test\ C:\damo_net\ /MIR /Z /XD .git /XF bootstrap_success.txt last-runs-check.sh cert-check.sh >> %LOGFILE%
 :: sync trusted root certificates
@@ -166,20 +166,20 @@ if exist C:\damo_net\windows_enforcer\batch\featureFlags-first-run_enforcement_c
 )
 
 :: install trusted root certificates if not present on local host
-echo installing trusted root certificates  >> %LOGFILE%
+echo "installing trusted root certificates" >> %LOGFILE%
 for /f %%f in ('dir /b %temp%\damo_net\trusted-root-certificates\') do certutil.exe -addstore root %temp%\damo_net\trusted-root-certificates\%%f && echo ** File: %%f ** >> %LOGFILE%
 
 :: Ensure enablement for auditing/logging logon and logoff events
-echo *ensure enablement of audit logging for logon and logoff events* >> %LOGFILE%
+echo "*ensure enablement of audit logging for logon and logoff events*" >> %LOGFILE%
 auditpol /set /subcategory:"Logoff" /success:enable /failure:enable >> %LOGFILE%
 auditpol /set /subcategory:"Logon" /success:enable /failure:enable >> %LOGFILE%
 
 :: Ensure enablement of task scheduler history
-echo *ensure enablement of task scheduler history* >> %LOGFILE%
+echo "*ensure enablement of task scheduler history*" >> %LOGFILE%
 wevtutil set-log Microsoft-Windows-TaskScheduler/Operational /enabled:true >> %LOGFILE%
 
 :: check if the scheduled tasks exists, recreating & first running them as neccessary
-echo checking scheduled tasks >> %LOGFILE%
+echo "checking scheduled tasks" >> %LOGFILE%
 schtasks /query /TN "Damo.net\First Run Enforcement Checks" >NUL 2>&1
 if %errorlevel% NEQ 0 (
 	echo scheduled task does not exist, re-creating - first run enforcement checks >> %LOGFILE%
@@ -194,7 +194,7 @@ if %errorlevel% NEQ 0 (
 	echo scheduled task does not exist, re-creating - first run enforcement checks jumpstarter >> %LOGFILE%
         :: create then start after delay while continuing this script
 	schtasks /Create /XML "C:\damo_net\windows_enforcer\batch\jumpstarter.xml" /TN "\First Run Enforcement Checks Jumpstarter" >> %LOGFILE%
-	echo first run enforcement jumpstart scheduled task created >> %LOGFILE%
+	echo "first run enforcement jumpstart scheduled task created" >> %LOGFILE%
 )
 
 schtasks /query /TN "Damo.net\Network Adapters - All - Reset" >NUL 2>&1
@@ -232,72 +232,83 @@ Powershell.exe -WindowStyle hidden -executionpolicy remotesigned -File C:\damo_n
 @REM 	echo "Startup - Windows Enforcer -- reg key/value not found. Registry updated" >> %LOGFILE%
 @REM )
 
+echo "*Install Management*" >> %LOGFILE
 :: Install Tools
-echo **Install Process** >> %LOGFILE%
+:: check if connetected to the internet, otherwise skip
+ping -n 1 google.com | find "TTL"
+if not errorlevel 1 (
+	echo "Internet connection detected, performing install processes" >> %LOGFILE%
+	:: Install Tools
+	echo "**Install Processes - Begin**" >> %LOGFILE%
 
-:: winget installs
-echo **winget installs** >> %LOGFILE%
+	:: winget installs
+	echo **winget installs** >> %LOGFILE%
 
-for /F "tokens=*" %%A in (C:\damo_net\windows_enforcer\batch\winget-installs.txt) do (
-	winget list %%A >> %LOGFILE%
-	if not errorlevel 0 (
-	winget install %%A -h --accept-package-agreements --accept-source-agreements --no-upgrade >> %LOGFILE% && echo installed %%A >> %LOGFILE%
-	) else (
-		echo "winget package already installed - %%A" >> %LOGFILE%
+	for /F "tokens=*" %%A in (C:\damo_net\windows_enforcer\batch\winget-installs.txt) do (
+		winget list %%A >> %LOGFILE%
+		if not errorlevel 0 (
+		winget install %%A -h --accept-package-agreements --accept-source-agreements --no-upgrade >> %LOGFILE% && echo installed %%A >> %LOGFILE%
+		) else (
+			echo "winget package already installed - %%A" >> %LOGFILE%
+		)
 	)
-)
 
-:: non-winget installs & downloads
-echo **non-winget installs and downloads** >> %LOGFILE%
+	:: non-winget installs & downloads
+	echo "**non-winget installs and downloads**" >> %LOGFILE%
 
-if not exist C:\Tools (
-	mkdir C:\Tools
-	echo created C:\Tools directory >> %LOGFILE%
-)
+	if not exist C:\Tools (
+		mkdir C:\Tools
+		echo created C:\Tools directory >> %LOGFILE%
+	)
 
-:: GitHub Raw Installs
-echo **github raw installs** >> %LOGFILE%
+	:: GitHub Raw Installs
+	echo "**github raw installs**" >> %LOGFILE%
 
-@echo off
-setlocal enabledelayedexpansion
+	@echo off
+	setlocal enabledelayedexpansion
 
-for /F "tokens=*" %%A in (C:\damo_net\windows_enforcer\batch\github-raw-installs.txt) do (
-  set fullpath=%%A
-  for %%a in ("!fullpath!/.") do set lastPart=%%~nxa
+	for /F "tokens=*" %%A in (C:\damo_net\windows_enforcer\batch\github-raw-installs.txt) do (
+	set fullpath=%%A
+	for %%a in ("!fullpath!/.") do set lastPart=%%~nxa
 
-  for /f "tokens=1 delims=." %%a in ("!lastPart!") do (
-   set dirname=%%a
-   if not exist C:\Tools\!dirname! (
-    mkdir C:\Tools\!dirname! >> %LOGFILE%
-    curl -o C:\Tools\!dirname!\!lastPart! !fullpath! >> %LOGFILE%
-    echo !dirname! installed >> %LOGFILE%
-   )
-  )  
-)
+	for /f "tokens=1 delims=." %%a in ("!lastPart!") do (
+	set dirname=%%a
+	if not exist C:\Tools\!dirname! (
+		mkdir C:\Tools\!dirname! >> %LOGFILE%
+		curl -o C:\Tools\!dirname!\!lastPart! !fullpath! >> %LOGFILE%
+		echo "!dirname! installed" >> %LOGFILE%
+	)
+	)  
+	)
 
-:: GitHub Release Installes
-echo **github release installs** >> %LOGFILE%
+	:: GitHub Release Installes
+	echo "**github release installs**" >> %LOGFILE%
 
-for /F "tokens=*" %%A in (C:\damo_net\windows_enforcer\batch\github-release-install.txt) do (
-set ghrelease=%%A
+	for /F "tokens=*" %%A in (C:\damo_net\windows_enforcer\batch\github-release-install.txt) do (
+	set ghrelease=%%A
 
-for /f "tokens=2 delims=/" %%a in ("!ghrelease!") do (
-  set dirname2=%%a  
-  if not exist C:\Tools\!dirname2! (
-    mkdir C:\Tools\!dirname2! >> %LOGFILE% 
-    cd C:\Tools\!dirname2!
-    for /f "tokens=1,* delims=:" %%A in ('curl -ks https://api.github.com/repos/!ghrelease!/releases/latest ^| find "browser_download_url"') do (
-     curl -kOL %%B >> %LOGFILE%
-    )
-  )
- )
+	for /f "tokens=2 delims=/" %%a in ("!ghrelease!") do (
+	set dirname2=%%a  
+	if not exist C:\Tools\!dirname2! (
+		mkdir C:\Tools\!dirname2! >> %LOGFILE% 
+		cd C:\Tools\!dirname2!
+		for /f "tokens=1,* delims=:" %%A in ('curl -ks https://api.github.com/repos/!ghrelease!/releases/latest ^| find "browser_download_url"') do (
+		curl -kOL %%B >> %LOGFILE%
+		)
+	)
+	)
+	)
+	echo "Install Processes - End" >> %LOGFILE%
+) else (
+	echo "No internet connection, skipping install processes" >> %LOGFILE%
 )
 
 :: Remove installs which are no longer listed - Excludes winget installs
-echo created list of what is installed >> %LOGFILE%
+echo "**remaining install management**" >> %LOGFILE%
+echo "created list of what is installed" >> %LOGFILE%
 dir /a:d /b C:\Tools\ > C:\damo_net\windows_enforcer\batch\install-removal\installed.txt
 
-echo created install_desired with list of what should be installed >> %LOGFILE%
+echo "created 'install_desired.txt' with list of what should be installed" >> %LOGFILE%
 if exist C:\damo_net\windows_enforcer\batch\install-removal\install_desired.txt (
 del /Q C:\damo_net\windows_enforcer\batch\install-removal\install_desired.txt
 )
@@ -318,7 +329,7 @@ for /f "tokens=2 delims=/" %%a in ("!ghrelease!") do (
  )
 )
 
-echo reconciled the list of installed against what should be installed outputting only those that should be removed >> %LOGFILE%
+echo "reconciled 'install_desired_.txt' list" >> %LOGFILE%
 if exist C:\damo_net\windows_enforcer\batch\install-removal\install_remove.txt (
   del /Q C:\damo_net\windows_enforcer\batch\install-removal\install_remove.txt
 )
@@ -335,12 +346,12 @@ if exist C:\damo_net\windows_enforcer\batch\install-removal\install_remove.txt (
   for /F "tokens=*" %%A in (C:\damo_net\windows_enforcer\batch\install-removal\install_remove.txt) do (
     set remove=%%A
     rmdir /s/q C:\Tools\!remove!
-	echo removing !remove! >> %LOGFILE%
+	echo "removing !remove!" >> %LOGFILE%
   )
 )
 
 :: Remove winget installs listed within the winget-uninstalls input file
-echo **processing winget uninstalls** >> %LOGFILE%
+echo "**processing winget uninstalls**" >> %LOGFILE%
 for /F "tokens=*" %%A in (C:\damo_net\windows_enforcer\batch\winget-uninstalls.txt) do (
 	set wgremove=%%A
 	findstr /r /s /i /m /c:"\<!wgremove!\>" "C:\damo_net\windows_enforcer\batch\winget-installs.txt"
@@ -348,12 +359,12 @@ for /F "tokens=*" %%A in (C:\damo_net\windows_enforcer\batch\winget-uninstalls.t
 		echo "winget uninstall conflict for '!wgremove!' - present in install input as well, skipping" >> %LOGFILE%
 	) else (
 		: winget install !wgremove! --force --override "/uninstall /silent"
-		echo attempting winget uninstall - !wgremove! >> %LOGFILE%
+		echo "attempting winget uninstall - !wgremove!" >> %LOGFILE%
 		winget uninstall !wgremove! -h --force --purge --disable-interactivity >> %LOGFILE%
 		if not errorlevel 0 (
 			echo "package already uninstalled or not found - !wgremove!" >> %LOGFILE%
 			) else (
-				echo uninstalled winget install - !wgremove! >> %LOGFILE%
+				echo "uninstalled winget install - !wgremove!" >> %LOGFILE%
 			) 
 	)
 )
@@ -367,17 +378,18 @@ if not exist C:\damo_net\windows_enforcer\batch\bootstrap_success.txt  (
 	icacls C:\damo_net\windows_enforcer\batch\bootstrap_success.txt /remove:g "Administrators" /q /c >> %LOGFILE%
 	icacls C:\damo_net\windows_enforcer\batch\bootstrap_success.txt /remove:g "Users" /q /c >> %LOGFILE%
 	icacls C:\damo_net\windows_enforcer\batch\bootstrap_success.txt /setowner "SYSTEM" /q /c >> %LOGFILE%
-	echo **bootstrap file and permissions created** >> %LOGFILE%
-	echo BOOTSTRAP SUCCESSFUL
+	echo "**bootstrap file and permissions created**" >> %LOGFILE%
+	echo "BOOTSTRAP SUCCESSFUL"
 	) else (
-		echo **bootstrap file and permissions already exists** >> %LOGFILE%
+		echo "**bootstrap file and permissions already exists**" >> %LOGFILE%
 	)
 
+:: last runs output with timestamp
 echo %TIMESTAMP% > C:\damo_net\windows_enforcer\batch\last_run.txt
 icacls C:\damo_net\windows_enforcer\batch\last_run.txt /reset /q /c >> %LOGFILE%
 icacls C:\damo_net\windows_enforcer\batch\last_run.txt /inheritance:d >> %LOGFILE%
 icacls C:\damo_net\windows_enforcer\batch\last_run.txt /grant "Users":(R) /q /c >> %LOGFILE%
-echo **last run file with timestamp created** >> %LOGFILE%
+echo "**last run file with timestamp created**" >> %LOGFILE%
 
 if exist C:\damo_net_last-runs (
 	echo %TIMESTAMP% > C:\damo_net_last-runs\%COMPUTERNAME%.txt
@@ -390,8 +402,8 @@ if exist C:\damo_net_last-runs (
 @REM 	echo "this is a test" > C:\damo_net\windows_enforcer\batch\testing.txt
 @REM 	)
 
-echo *End Installs* >> %LOGFILE%
-echo *End Script* >> %LOGFILE%
+echo "*End Install Management*" >> %LOGFILE%
+echo "*End Script*" >> %LOGFILE%
 
 :: Output log file location
-echo LOG LOCATION: %LOGFILE%
+echo "LOG LOCATION: %LOGFILE%"

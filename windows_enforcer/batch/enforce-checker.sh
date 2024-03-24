@@ -171,6 +171,14 @@ then
   echo "feature flag = [$fffolder] parent folder missing and was re-created" >> $outputlist
 fi
 
+## windows malware and privacy feature flag file checker
+if [ ! -f $fffolder/windows_os-malware-privacy_renameMe-*.txt ]
+then
+  touch $fffolder/windows_os-malware-privacy_renameMe-OFF.txt
+  echo "feature flag = [windows_os-malware-privacy_renameMe-.txt] file missing and was re-created in the default OFF position" >> $outputlist
+fi
+sed -i -e 's/\r$//' $fffolder/windows_os-malware-privacy_renameMe-*.txt
+
 ## cert force refresh list checker
 if [ ! -f $fffolder/certificate-refresh_FORCE_renameMe-*.txt ]
 then

@@ -87,7 +87,7 @@ if not exist Z:\ (
 :resync
 echo ** syncing files with NAS enforcement folder ** >> %LOGFILE%
 :: sync scripts
-robocopy C:\test\ C:\damo_net\ /MIR /XD .git /XF bootstrap_success.txt last-runs-check.sh >> %LOGFILE%
+robocopy C:\test\ C:\damo_net\ /MIR /Z /XD .git /XF bootstrap_success.txt last-runs-check.sh cert-check.sh >> %LOGFILE%
 :: sync trusted root certificates
 robocopy C:\test\trusted-root-certificates %temp%\damo_net\trusted-root-certificates /MIR  >> %LOGFILE%
 

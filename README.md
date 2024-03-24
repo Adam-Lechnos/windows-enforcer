@@ -187,8 +187,14 @@ Email alerts will be generated with an attached log file if any of the following
 * The `enforce-checker.sh` produces a log file in `windows_enforcer\last_run_enforce-checker.txt`. The log file is overwritten by every run of the process.
 
 #### Checking last runs
-The Last Run Checker is presents a list of all hosts with their last First Run Enforcement Check runs. The same files parsed by the tools are also used by the Enforcement Checker to produce email alerts for each host that did not incur a run in 21 days or more. These emails are sent with a unified attachment of all other issues detected by the Enforcement Checker. The Last Run Checker tool may only be executed on the NAS device and not on the clients-side and are excluded from the enforcement's copy process.
+The Last Run Checker is presents a list of all hosts with their last First Run Enforcement Check runs. The same files parsed by the tools are also used by the Enforcement Checker to produce email alerts for each host that did not incur a run in 21 days or more. These emails are sent with a unified attachment of all other issues detected by the Enforcement Checker; for hosts which meet this criteria, an indicator will be presented within the output. The Last Run Checker tool may only be executed on the NAS device and not on the clients-side and are excluded from the enforcement's copy process.
 
 * To use the tool, execute the following command from shell directly on the NAS: `Z:\<NAS HOST>\<PARENT DIRECTORY>\last-runs-check.sh`
 * The suite of files outputted by every host and parsed by the tool is located at `Z:\<NAS HOST>\damo_net_last-runs`
 * Logs are overwritten by every host with a timestamp indicating the last run time and date.
+
+#### Checking certificates
+The Certificate Checker will output a list of each certificate inside the `trusted-root-certificates` folder with the following details: File Name, Subject, Expiration, and an indicator as to whether the certificate expires in less than or equal to 45 days. This tool many only be executed on the NAS device and not the client-side and are excluded from the enforcement's copy process.
+
+* To use the tool, execute the following command from shell directly on the NAS: `Z:\<NAS HOST>\<PARENT DIRECTORY>\cert-check.sh`
+* The suite of files outputted by every host and parsed by the tool is located at `Z:\<NAS HOST>\trusted_root_certificates`

@@ -30,6 +30,7 @@ An email alert is sent when issues are discovered with any of the install and/or
 6. Delete the manually executed `first_run_enforcement_checks.bat` file (which should *not* be the `C:\damo_net\windows_enforcer\batch\first_run_enforcement_checks.bat` copy).
 
 ### NAS Installation
+1. Ensure `xmllint` is installed by running the following command" `if ! command -v xmllint; then sudo apt install libxml2-utils; fi`.
 1. Place a copy of the entire enforcement-script-windows folder somewhere within the directory structure of the NAS and create a Shared Folder with read-only permissions.
 1. Update the `first_run_enforcement_checks.bat` script to robocopy from the Shared Folder root recursively via the full path from the client's 'Z' drive mapping, per the snippet:
   1. ```batch
@@ -93,12 +94,17 @@ Each client runtime will ensure the following OS Settings and Windows Filesystem
 * Lock down the directory, `C:\damo_net` with only read and list access by non-Admins within the `Users` group.
 * Scheduled tasks are only viewable/modifiable by Admins.
 * The First Run Enforcement Checks scheduled task is recreated when deleted by the The First Run Enforcement Checks Jumpstart scheduled task, which performs a check every user logon.
-  * Separate log files are created for the program which executes under the Jumpstarter. Log files are located in the same folder as the First Run Enforcement tasks prepended with  `jumpstart-`
+  * Separate log files are created for the program which executes under the Jumpstarter. Log files are located in the same folder as the First Run Enforcement tasks prepended with  `jumpstart-`. Refer to the [Logging](#Logging) section for more info.
 * The Jumpstart process runs every logon and every 3 days, checking scheduled tasks, scripts files, and last runs. Any errors will trigger re-syncing of the enforcement folder and re-creation of the scheduled tasks.
 
 ### Feature Flags
 The First Run Enforcement Script contains a feature flag folder, editable on the NAS enforcement folder, `\windows_enforcer\batch\featureFlags-first-run_enforcement_checks`
 Each file may be set to ON by updating the appended name accordingly.
+
+#### Feature Flag file details - file names below are case/spelling sensitive:
+* `certificate-refresh-renameMe-ON.txt` --> This file is managed by the program and should not be modified; used to track which certs are slated for refresh based on their expiry. certs expiring within 15 days are added to this list. new certs should be replaced using the same values and cert file name. 
+* `certificate-refresh_FORCE_renameMe-OFF.txt` --> Rename with OFF set to ON and add hostnames for hosts that require a full cert refresh. only used for hosts that have been offline long enough to miss certificate replacements. set back to OFF when not in use.
+* `windows_os-malware-privacy_renameMe-ON.txt` --> A future feature flag, ensuring all privacy and malware-based Windows OS settings are hardened. Based on Chris Wellons' hardening. The code was taken from [0mid](https://gitlab.com/0mid/dotfiles/-/blob/master/lessmal.bat?ref_type=heads). Default: `OFF`
 
 ### Editing Scheduled Tasks
 Use extreme caution in editing the Task Scheduler files which determine the scheduled tasks configurations. Only users with write permissions to the NAS enforcement folder may edit these files.
@@ -109,11 +115,6 @@ Use extreme caution in editing the Task Scheduler files which determine the sche
 
 ### Enforcement Customizations
 A Powershell facility exists in order to add customizations to the enforcement process. Add customizations with extreme caution ensuring the script has be thoroughly tested, ideally in a separate `test.ps1` file. Edit the following file to add custom scripting: `\windows_enforcer\powershell\first_run_enforcement-powershell.ps1`. This file may only be edited from the NAS device with proper write permissions. Be sure not to edit 
-
-#### Feature Flag file details - file names below are case/spelling sensitive:
-* `certificate-refresh-renameMe-ON.txt` --> This file is managed by the program and should not be modified; used to track which certs are slated for refresh based on their expiry. certs expiring within 15 days are added to this list. new certs should be replaced using the same values and cert file name. 
-* `certificate-refresh_FORCE_renameMe-OFF.txt` --> Rename with OFF set to ON and add hostnames for hosts that require a full cert refresh. only used for hosts that have been offline long enough to miss certificate replacements. set back to OFF when not in use.
-* `windows_os-malware-privacy_renameMe-ON.txt` --> A future feature flag, ensuring all privacy and malware-based Windows OS settings are hardened. Based on Chris Wellons' hardening. The code was used from [0mid](https://gitlab.com/0mid/dotfiles/-/blob/master/lessmal.bat?ref_type=heads). Default: `OFF`
 
 ### Logging
 Scripts executed manually will output logging data to the logged-in user's temp directory --> `%temp%\damo-net\logs` (`C:\Users\<user>\AppData\Local\Temp\damo_net`)

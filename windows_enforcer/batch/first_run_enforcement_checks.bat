@@ -223,16 +223,11 @@ auditpol /set /Category:"Privilege Use" /success:enable /failure:enable
 auditpol /set /Category:"Account Management" /success:enable /failure:enable
 
 :: Enable Auditing for all users, all events, all event types, for local damo_net folder. Logging is set inside the script and outputs to a separate file.
+:: All additional customizations for the enforcement process should be added to the powershell script below from the NAS device.
 Powershell.exe -WindowStyle hidden -executionpolicy remotesigned -File C:\damo_net\windows_enforcer\powershell\first_run_enforcement-powershell.ps1
+echo "*Powershell facility execution attempted - check the most recent 'first_run_enforcement-powershell-<timestamp>.log' file for execution details.*" >> %LOGFILE%
 
-:: Startup - Ensure jumpstart program is added to startup for all users and every reboot
-@REM reg query HKLM\Software\Microsoft\Windows\CurrentVersion\Run /v WinEnforcer | findstr C:\damo_net\windows_enforcer\batch\jumpstart
-@REM if %errorlevel% NEQ 0 (
-@REM 	reg add HKLM\Software\Microsoft\Windows\CurrentVersion\Run /v WinEnforcer /t REG_SZ /d "C:\damo_net\windows_enforcer\batch\jumpstart.bat" /f
-@REM 	echo "Startup - Windows Enforcer -- reg key/value not found. Registry updated" >> %LOGFILE%
-@REM )
-
-echo "*Install Management*" >> %LOGFILE
+echo "*Install Management*" >> %LOGFILE%
 :: Install Tools
 :: check if connetected to the internet, otherwise skip
 ping -n 1 google.com | find "TTL"

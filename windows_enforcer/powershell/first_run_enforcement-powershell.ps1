@@ -1,5 +1,7 @@
 # Powershell script executed by first_run_enforcement_checks.bat
 
+# START - DO NOT EDIT SECTION
+
 $TIMESTAMP = (get-date -f MM-dd-yyyy_HH-mm-ss)
 $TEMPFOLDER= [System.Environment]::GetEnvironmentVariable('TEMP')
 $LOGFILE = "$TEMPFOLDER\damo_net\logs\first-run-enforcement-powershell-$TIMESTAMP.log"
@@ -17,3 +19,9 @@ $MyAcl.GetAuditRules | Out-File -FilePath $LOGFILE -Append
 echo "* End Audit Policy Enforcement *" | Out-File -FilePath $LOGFILE -Append
 
 echo "*End Script*" | Out-File -FilePath $LOGFILE -Append
+
+# END - DO NOT EDIT SECTION
+
+# Add custimizations below this line. Be sure to use the `Out-File - FilePath $LOGFILE -Append` command for proper output logging where possible.
+
+# BEGIN - CUSTOMIZATIONS

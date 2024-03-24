@@ -100,10 +100,20 @@ Each client runtime will ensure the following OS Settings and Windows Filesystem
 The First Run Enforcement Script contains a feature flag folder, editable on the NAS enforcement folder, `\windows_enforcer\batch\featureFlags-first-run_enforcement_checks`
 Each file may be set to ON by updating the appended name accordingly.
 
+### Editing Scheduled Tasks
+Use extreme caution in editing the Task Scheduler files which determine the scheduled tasks configurations. Only users with write permissions to the NAS enforcement folder may edit these files.
+
+* `First Run Enforcement Checks.xml`: Manage the triggers and cadence of the `first_run_enforcement_checks.bat` executions.
+* `Jumpstarter.xml`: Manage the triggers and cadence of the `Jumpstarter.bat` executions.
+* `Network Adapters - All - Reset.xml`: Manage the triggers and cadence of the `Network_Adapters-All-Reset-Default.ps1` executions.
+
+### Enforcement Customizations
+A Powershell facility exists in order to add customizations to the enforcement process. Add customizations with extreme caution ensuring the script has be thoroughly tested, ideally in a separate `test.ps1` file. Edit the following file to add custom scripting: `\windows_enforcer\powershell\first_run_enforcement-powershell.ps1`. This file may only be edited from the NAS device with proper write permissions. Be sure not to edit 
+
 #### Feature Flag file details - file names below are case/spelling sensitive:
 * `certificate-refresh-renameMe-ON.txt` --> This file is managed by the program and should not be modified; used to track which certs are slated for refresh based on their expiry. certs expiring within 15 days are added to this list. new certs should be replaced using the same values and cert file name. 
 * `certificate-refresh_FORCE_renameMe-OFF.txt` --> Rename with OFF set to ON and add hostnames for hosts that require a full cert refresh. only used for hosts that have been offline long enough to miss certificate replacements. set back to OFF when not in use.
-* `windows_os-malware-privacy_renameMe-ON.txt` --> A future feature flag, ensuring all privacy and malware-based Windows OS settings are hardened. Based on Chris Wellons' hardening. The code was used from [0mid](https://gitlab.com/0mid/dotfiles/-/blob/master/lessmal.bat?ref_type=heads). Default: `ON`
+* `windows_os-malware-privacy_renameMe-ON.txt` --> A future feature flag, ensuring all privacy and malware-based Windows OS settings are hardened. Based on Chris Wellons' hardening. The code was used from [0mid](https://gitlab.com/0mid/dotfiles/-/blob/master/lessmal.bat?ref_type=heads). Default: `OFF`
 
 ### Logging
 Scripts executed manually will output logging data to the logged-in user's temp directory --> `%temp%\damo-net\logs` (`C:\Users\<user>\AppData\Local\Temp\damo_net`)
@@ -113,6 +123,13 @@ A new log is generated with the execution's point-in-time date and time stamp ap
 If the client is off the network, the script will attempt to execute enforcement tasks, which are expected to fail if at least one sync has not occurred or if the files were deleted within the local scripts folder. The next successful re-sync will re-create any missing files.
 
 For every client run, `last_run.txt` is overwritten with the timestamp of the most recent execution. The file is located in `windows_enforcer\batch\last_run.tx`. This file is created on each local host in addition to a remote copy with the filename being the hostname. These remote files are used be [Enforcement Checker](#enforcement-checker) to alert on last runs which did not occur for at least 28 days.
+
+Every Jumpstart run also created an overwritten file, `last_run-jumpstart.txt`, with the most recent timestamp of execution.
+
+Log files are created in `%TEMP%` (system level) as follows:
+* `first-run-enforcement-<timestamp>.log`: contains details about the `first_run_enforcement.bat` executions.
+* `first-run-enforcement-powershell-<timestamp>.log`: contains details about the `first_run_enforcement-powershell.ps1` executions.
+* `jumpstart-<timestamp>.log`: contains details about the `jumpstarter.bat` executions.
 
 ### Managing Installs
 Downloads packages to the `C:\Tools` folder, except for those that are obtained via the Winget package manager, in which case are installed according to the Winget process. Note, that only the data is downloaded to the `C:\Tools` folder. Subsequent installs must occur manually post the data retrieval if required. Use this feature for pulling down simple packages. Subsequent download attempts are ignored for each install in which its corresponding directory gets created. For Winget, the script first checks the Winget list command for existing installs. Upgrades are not attempted once the installation is completed. Use `Winget update --all` instead.
@@ -178,6 +195,7 @@ Email alerts will be generated with an attached log file if any of the following
 * Check if the Winget installer and uninstaller input files contain the same package
 * Certificate management files are missing such as 'certificate-refresh-FORCE_renameMe-OFF.txt' or the 'trusted-root-certificates' directory is missing.
   * Files and directories will be re-created with default settings
+* Certificate validity is checked and invalid certs are placed in a newly created folder, `trusted-root-certificates-INVALID`. Certs already processed with this file name are placed on the revocation list.
 * Certificate has been added to the revocation list and will be removed from all clients on their next enforcement run
   * Missing or corrupt certificate revocation management files and corrective actions.  
 *  Ensure input files are properly formatted by replacing correct [POSIX](https://unix.stackexchange.com/questions/153091/how-to-add-a-carriage-return-before-every-newline) carriage returns and removes empty lines
@@ -187,14 +205,14 @@ Email alerts will be generated with an attached log file if any of the following
 * Last runs for any host is not reported back for more than 21 days. Last runs may be monitored by checking the parent NAS drive `Z`, checking the filename of the hostname corresponding to the last run check. Simply open the file to check the last date and time of the most recent enforcement run.
 * The `enforce-checker.sh` produces a log file in `windows_enforcer\last_run_enforce-checker.txt`. The log file is overwritten by every run of the process.
 
-#### Checking last runs
+#### Last Run Check CLI
 The Last Run Checker is presents a list of all hosts with their last First Run Enforcement Check runs. The same files parsed by the tools are also used by the Enforcement Checker to produce email alerts for each host that did not incur a run in 21 days or more. These emails are sent with a unified attachment of all other issues detected by the Enforcement Checker; for hosts which meet this criteria, an indicator will be presented within the output. The Last Run Checker tool may only be executed on the NAS device and not on the clients-side and are excluded from the enforcement's copy process.
 
 * To use the tool, execute the following command from shell directly on the NAS: `Z:\<NAS HOST>\<PARENT DIRECTORY>\last-runs-check.sh`
 * The suite of files outputted by every host and parsed by the tool is located at `Z:\<NAS HOST>\damo_net_last-runs`
 * Logs are overwritten by every host with a timestamp indicating the last run time and date.
 
-#### Checking certificates
+#### Certificate Check CLI
 The Certificate Checker will output a list of each certificate inside the `trusted-root-certificates` folder with the following details: File Name, Subject, Expiration, and an indicator as to whether the certificate expires in less than or equal to 45 days. This tool many only be executed on the NAS device and not the client-side and are excluded from the enforcement's copy process.
 
 * To use the tool, execute the following command from shell directly on the NAS: `Z:\<NAS HOST>\<PARENT DIRECTORY>\cert-check.sh`
